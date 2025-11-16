@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hanimus LLC - IT Tech Dispatch</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; }
+        .gradient-bg { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(185, 28, 28, 0.4); }
+        .logo-container { background: white; padding: 1.5rem; border-radius: 1rem; display: inline-block; }
+        [dir="rtl"] { text-align: right; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const logoPath = './fulllogo.png';
+
+        // Translations
+        const translations = {
+            en: {
+                // Landing Page
+                heroTitle: "IT Tech Dispatch",
+                heroSubtitle: "Streamline your IT operations with intelligent technician dispatch and service request management",
+                registerCustomer: "Register as Customer",
+                applyTechnician: "Apply as Technician",
+                signIn: "Sign In",
+                whatWeDo: "What We Do",
+                missionText: "At Hanimus LLC, we don't just manage IT requests—we revolutionize them. Headquartered in Citrus Heights and serving the greater Sacramento area, our mission is clear: to connect businesses with certified IT professionals through a seamless, intelligent dispatch platform that eliminates downtime and maximizes efficiency.",
+                smartDispatch: "Smart Dispatch System",
+                smartDispatchDesc: "Our intelligent platform matches your IT needs with the right certified technician—instantly. From network issues to hardware failures, from security concerns to software troubleshooting, we ensure the perfect match every time.",
+                certifiedPros: "Certified Professionals",
+                certifiedProsDesc: "We don't just hire technicians—we cultivate excellence. Every professional on our platform undergoes rigorous vetting, bringing certifications, real-world experience, and a commitment to solving your IT challenges with precision.",
+                availability247: "24/7 Availability",
+                availability247Desc: "Technology issues don't wait for business hours—neither do we. Our platform operates around the clock, ensuring you can submit requests, track progress, and connect with technicians whenever urgent needs arise.",
+                whoWeServe: "Who We Serve",
+                whoWeServeDesc: "From small businesses to enterprise organizations, from healthcare facilities to educational institutions, from retail operations to professional services—we provide tailored IT support solutions that scale with your needs. Our platform handles everything from routine maintenance to critical emergency responses, delivering consistent, documented, and professional service every time.",
+                healthcare: "Healthcare",
+                corporate: "Corporate",
+                education: "Education",
+                retail: "Retail",
+                whyChoose: "Why Choose Hanimus LLC?",
+                realTimeTracking: "Real-Time Tracking",
+                realTimeTrackingDesc: "Monitor every step of your service request from submission to completion with full transparency.",
+                qualityAssurance: "Quality Assurance",
+                qualityAssuranceDesc: "Every job requires technician completion notes and customer review, ensuring accountability and excellence.",
+                rapidResponse: "Rapid Response",
+                rapidResponseDesc: "Our priority-based system ensures urgent issues get immediate attention from available technicians.",
+                completeDoc: "Complete Documentation",
+                completeDocDesc: "Full audit trails, technician notes, and customer feedback for every service request.",
+                copyright: "© 2002-2024 Hanimus LLC. All rights reserved.",
+                // Login
+                loginTitle: "Sign in to your account",
+                email: "Email",
+                password: "Password",
+                confirmPassword: "Confirm Password",
+                login: "Sign In",
+                registerAsCustomer: "Register as Customer →",
+                applyAsTechnician: "Apply as Technician →",
+                back: "← Back",
+                demoAccounts: "Demo Accounts:",
+                // Common
+                logout: "Logout",
+                cancel: "Cancel",
+                submit: "Submit",
+                name: "Name",
+                phone: "Phone",
+                address: "Address",
+                // Dashboard
+                requests: "Requests",
+                technicians: "Technicians",
+                customers: "Customers",
+                myRequests: "My Requests",
+                newRequest: "New Request",
+                myJobs: "My Jobs",
+                total: "Total",
+                pending: "Pending",
+                active: "Active",
+                inProgress: "In Progress",
+                completed: "Completed",
+                review: "Review",
+                readyToReview: "Ready to Review",
+                awaitingReview: "Awaiting Review",
+            },
+            ar: {
+                // Landing Page
+                heroTitle: "نظام إرسال تقنية المعلومات",
+                heroSubtitle: "قم بتبسيط عمليات تقنية المعلومات الخاصة بك من خلال نظام ذكي لإرسال الفنيين وإدارة طلبات الخدمة",
+                registerCustomer: "التسجيل كعميل",
+                applyTechnician: "التقديم كفني",
+                signIn: "تسجيل الدخول",
+                whatWeDo: "ما نقوم به",
+                missionText: "في شركة Hanimus LLC، نحن لا ندير طلبات تقنية المعلومات فحسب - بل نحدث ثورة فيها. يقع مقرنا الرئيسي في سيتروس هايتس ونخدم منطقة ساكرامنتو الكبرى، مهمتنا واضحة: ربط الشركات بمحترفي تقنية المعلومات المعتمدين من خلال منصة إرسال ذكية وسلسة تلغي وقت التوقف وتزيد الكفاءة إلى أقصى حد.",
+                smartDispatch: "نظام الإرسال الذكي",
+                smartDispatchDesc: "تقوم منصتنا الذكية بمطابقة احتياجاتك في تقنية المعلومات مع الفني المعتمد المناسب - على الفور. من مشاكل الشبكة إلى فشل الأجهزة، من مخاوف الأمان إلى استكشاف أخطاء البرامج وإصلاحها، نضمن التطابق المثالي في كل مرة.",
+                certifiedPros: "محترفون معتمدون",
+                certifiedProsDesc: "نحن لا نوظف الفنيين فحسب - بل نزرع التميز. يخضع كل محترف على منصتنا لفحص دقيق، حاملاً الشهادات والخبرة الواقعية والتزامًا بحل تحديات تقنية المعلومات الخاصة بك بدقة.",
+                availability247: "متاح على مدار الساعة",
+                availability247Desc: "مشاكل التكنولوجيا لا تنتظر ساعات العمل - ونحن أيضًا. تعمل منصتنا على مدار الساعة، مما يضمن أنه يمكنك تقديم الطلبات وتتبع التقدم والتواصل مع الفنيين عند ظهور احتياجات عاجلة.",
+                whoWeServe: "من نخدم",
+                whoWeServeDesc: "من الشركات الصغيرة إلى المؤسسات الكبيرة، من المرافق الصحية إلى المؤسسات التعليمية، من عمليات البيع بالتجزئة إلى الخدمات المهنية - نحن نقدم حلول دعم تقنية معلومات مخصصة تتناسب مع احتياجاتك. تتعامل منصتنا مع كل شيء من الصيانة الروتينية إلى استجابات الطوارئ الحرجة، وتقديم خدمة متسقة وموثقة ومهنية في كل مرة.",
+                healthcare: "الرعاية الصحية",
+                corporate: "الشركات",
+                education: "التعليم",
+                retail: "التجزئة",
+                whyChoose: "لماذا تختار Hanimus LLC؟",
+                realTimeTracking: "التتبع في الوقت الفعلي",
+                realTimeTrackingDesc: "راقب كل خطوة من طلب الخدمة الخاص بك من التقديم إلى الإكمال بشفافية كاملة.",
+                qualityAssurance: "ضمان الجودة",
+                qualityAssuranceDesc: "تتطلب كل وظيفة ملاحظات إكمال الفني ومراجعة العميل، مما يضمن المساءلة والتميز.",
+                rapidResponse: "استجابة سريعة",
+                rapidResponseDesc: "يضمن نظامنا القائم على الأولوية حصول المشكلات العاجلة على اهتمام فوري من الفنيين المتاحين.",
+                completeDoc: "توثيق كامل",
+                completeDocDesc: "مسارات تدقيق كاملة، وملاحظات الفني، وتعليقات العملاء لكل طلب خدمة.",
+                copyright: "© 2002-2024 Hanimus LLC. جميع الحقوق محفوظة.",
+                // Login
+                loginTitle: "تسجيل الدخول إلى حسابك",
+                email: "البريد الإلكتروني",
+                password: "كلمة المرور",
+                confirmPassword: "تأكيد كلمة المرور",
+                login: "تسجيل الدخول",
+                registerAsCustomer: "التسجيل كعميل ←",
+                applyAsTechnician: "التقديم كفني ←",
+                back: "→ رجوع",
+                demoAccounts: "حسابات تجريبية:",
+                // Common
+                logout: "تسجيل الخروج",
+                cancel: "إلغاء",
+                submit: "إرسال",
+                name: "الاسم",
+                phone: "الهاتف",
+                address: "العنوان",
+                // Dashboard
+                requests: "الطلبات",
+                technicians: "الفنيون",
+                customers: "العملاء",
+                myRequests: "طلباتي",
+                newRequest: "طلب جديد",
+                myJobs: "وظائفي",
+                total: "المجموع",
+                pending: "قيد الانتظار",
+                active: "نشط",
+                inProgress: "قيد التنفيذ",
+                completed: "مكتمل",
+                review: "مراجعة",
+                readyToReview: "جاهز للمراجعة",
+                awaitingReview: "في انتظار المراجعة",
+            },
+            fr: {
+                // Landing Page
+                heroTitle: "Répartition Technique IT",
+                heroSubtitle: "Rationalisez vos opérations informatiques avec une répartition intelligente des techniciens et une gestion des demandes de service",
+                registerCustomer: "S'inscrire en tant que client",
+                applyTechnician: "Postuler en tant que technicien",
+                signIn: "Se connecter",
+                whatWeDo: "Ce que nous faisons",
+                missionText: "Chez Hanimus LLC, nous ne gérons pas simplement les demandes informatiques - nous les révolutionnons. Basés à Citrus Heights et desservant la grande région de Sacramento, notre mission est claire : connecter les entreprises avec des professionnels de l'informatique certifiés via une plateforme de répartition intelligente et transparente qui élimine les temps d'arrêt et maximise l'efficacité.",
+                smartDispatch: "Système de Répartition Intelligent",
+                smartDispatchDesc: "Notre plateforme intelligente fait correspondre vos besoins informatiques avec le bon technicien certifié - instantanément. Des problèmes de réseau aux pannes matérielles, des problèmes de sécurité au dépannage logiciel, nous garantissons la correspondance parfaite à chaque fois.",
+                certifiedPros: "Professionnels Certifiés",
+                certifiedProsDesc: "Nous n'embauchons pas seulement des techniciens - nous cultivons l'excellence. Chaque professionnel sur notre plateforme subit un contrôle rigoureux, apportant des certifications, une expérience du monde réel et un engagement à résoudre vos défis informatiques avec précision.",
+                availability247: "Disponibilité 24/7",
+                availability247Desc: "Les problèmes technologiques n'attendent pas les heures de bureau - nous non plus. Notre plateforme fonctionne 24 heures sur 24, vous permettant de soumettre des demandes, de suivre les progrès et de vous connecter avec des techniciens chaque fois que des besoins urgents surviennent.",
+                whoWeServe: "Qui nous servons",
+                whoWeServeDesc: "Des petites entreprises aux organisations d'entreprise, des établissements de santé aux institutions éducatives, des opérations de vente au détail aux services professionnels - nous fournissons des solutions de support informatique sur mesure qui évoluent avec vos besoins. Notre plateforme gère tout, de la maintenance de routine aux interventions d'urgence critiques, en fournissant un service cohérent, documenté et professionnel à chaque fois.",
+                healthcare: "Santé",
+                corporate: "Entreprise",
+                education: "Éducation",
+                retail: "Commerce",
+                whyChoose: "Pourquoi choisir Hanimus LLC ?",
+                realTimeTracking: "Suivi en temps réel",
+                realTimeTrackingDesc: "Surveillez chaque étape de votre demande de service de la soumission à l'achèvement en toute transparence.",
+                qualityAssurance: "Assurance qualité",
+                qualityAssuranceDesc: "Chaque travail nécessite des notes d'achèvement du technicien et un examen du client, garantissant la responsabilité et l'excellence.",
+                rapidResponse: "Réponse rapide",
+                rapidResponseDesc: "Notre système basé sur les priorités garantit que les problèmes urgents reçoivent une attention immédiate des techniciens disponibles.",
+                completeDoc: "Documentation complète",
+                completeDocDesc: "Pistes d'audit complètes, notes de technicien et commentaires des clients pour chaque demande de service.",
+                copyright: "© 2002-2024 Hanimus LLC. Tous droits réservés.",
+                // Login
+                loginTitle: "Connectez-vous à votre compte",
+                email: "Email",
+                password: "Mot de passe",
+                confirmPassword: "Confirmer le mot de passe",
+                login: "Se connecter",
+                registerAsCustomer: "S'inscrire en tant que client →",
+                applyAsTechnician: "Postuler en tant que technicien →",
+                back: "← Retour",
+                demoAccounts: "Comptes de démonstration :",
+                // Common
+                logout: "Déconnexion",
+                cancel: "Annuler",
+                submit: "Soumettre",
+                name: "Nom",
+                phone: "Téléphone",
+                address: "Adresse",
+                // Dashboard
+                requests: "Demandes",
+                technicians: "Techniciens",
+                customers: "Clients",
+                myRequests: "Mes demandes",
+                newRequest: "Nouvelle demande",
+                myJobs: "Mes tâches",
+                total: "Total",
+                pending: "En attente",
+                active: "Actif",
+                inProgress: "En cours",
+                completed: "Terminé",
+                review: "Examen",
+                readyToReview: "Prêt à examiner",
+                awaitingReview: "En attente d'examen",
+            }
+        };
+
+        const App = () => {
+            const [currentView, setCurrentView] = useState('landing');
+            const [currentUser, setCurrentUser] = useState(null);
+            const [users, setUsers] = useState([]);
+            const [requests, setRequests] = useState([]);
+            const [technicians, setTechnicians] = useState([]);
+            const [pendingTechnicians, setPendingTechnicians] = useState([]);
+            const [isDataLoaded, setIsDataLoaded] = useState(false);
+            const [language, setLanguage] = useState('en');
+
+            // Helper function to get translation
+            const t = (key) => translations[language][key] || key;
+
+            // Default data - only used for first initialization
+            const defaultUsers = [
+                { id: 1, email: 'admin@hanimus.com', password: 'admin123', role: 'admin', name: 'Admin User' },
+                { id: 2, email: 'customer@company.com', password: 'customer123', role: 'customer', companyName: 'Acme Corp', phone: '555-1234', address: '123 Main St' },
+                { id: 3, email: 'tech@hanimus.com', password: 'tech123', role: 'technician', name: 'John Martinez', approved: true }
+            ];
+
+            const defaultTechnicians = [
+                { id: 1, userId: 3, name: 'John Martinez', email: 'tech@hanimus.com', specialization: 'Network Infrastructure', skills: ['Cisco', 'VPN'], certifications: ['CCNA'], experience: '5 years', diploma: 'BS Computer Networks', status: 'available', approved: true, avatar: '👨‍💼' }
+            ];
+
+            const defaultRequests = [
+                { id: 1, customerId: 2, customerName: 'Acme Corp', title: 'Network Issue', description: 'Cannot connect to server', priority: 'high', category: 'network', location: 'Building A, Floor 2', preferredDate: '2024-11-15', preferredTime: '10:00-12:00', status: 'pending', assignedTechnician: null, createdAt: new Date().toISOString(), comments: [] }
+            ];
+
+            // Initialize data from localStorage or use defaults
+            useEffect(() => {
+                const savedUsers = localStorage.getItem('itdispatch_users');
+                const savedTechnicians = localStorage.getItem('itdispatch_technicians');
+                const savedPendingTechnicians = localStorage.getItem('itdispatch_pending_technicians');
+                const savedRequests = localStorage.getItem('itdispatch_requests');
+                const savedCurrentView = localStorage.getItem('itdispatch_current_view');
+                const savedCurrentUser = localStorage.getItem('itdispatch_current_user');
+                const savedLanguage = localStorage.getItem('itdispatch_language');
+
+                if (savedUsers) {
+                    setUsers(JSON.parse(savedUsers));
+                } else {
+                    setUsers(defaultUsers);
+                }
+
+                if (savedTechnicians) {
+                    setTechnicians(JSON.parse(savedTechnicians));
+                } else {
+                    setTechnicians(defaultTechnicians);
+                }
+
+                if (savedPendingTechnicians) {
+                    setPendingTechnicians(JSON.parse(savedPendingTechnicians));
+                } else {
+                    setPendingTechnicians([]);
+                }
+
+                if (savedRequests) {
+                    setRequests(JSON.parse(savedRequests));
+                } else {
+                    setRequests(defaultRequests);
+                }
+
+                // Restore session
+                if (savedCurrentView) {
+                    setCurrentView(savedCurrentView);
+                }
+                if (savedCurrentUser) {
+                    setCurrentUser(JSON.parse(savedCurrentUser));
+                }
+                if (savedLanguage) {
+                    setLanguage(savedLanguage);
+                }
+
+                // Mark data as loaded after initial load
+                setIsDataLoaded(true);
+            }, []);
+
+            // Save current view to localStorage
+            useEffect(() => {
+                if (isDataLoaded) {
+                    localStorage.setItem('itdispatch_current_view', currentView);
+                }
+            }, [currentView, isDataLoaded]);
+
+            // Save current user to localStorage
+            useEffect(() => {
+                if (isDataLoaded) {
+                    if (currentUser) {
+                        localStorage.setItem('itdispatch_current_user', JSON.stringify(currentUser));
+                    } else {
+                        localStorage.removeItem('itdispatch_current_user');
+                    }
+                }
+            }, [currentUser, isDataLoaded]);
+
+            // Save language to localStorage
+            useEffect(() => {
+                if (isDataLoaded) {
+                    localStorage.setItem('itdispatch_language', language);
+                }
+            }, [language, isDataLoaded]);
+
+            // Save to localStorage whenever data changes (only after initial load)
+            useEffect(() => {
+                if (isDataLoaded && users.length > 0) {
+                    localStorage.setItem('itdispatch_users', JSON.stringify(users));
+                }
+            }, [users, isDataLoaded]);
+
+            useEffect(() => {
+                if (isDataLoaded) {
+                    localStorage.setItem('itdispatch_technicians', JSON.stringify(technicians));
+                }
+            }, [technicians, isDataLoaded]);
+
+            useEffect(() => {
+                if (isDataLoaded) {
+                    localStorage.setItem('itdispatch_pending_technicians', JSON.stringify(pendingTechnicians));
+                }
+            }, [pendingTechnicians, isDataLoaded]);
+
+            useEffect(() => {
+                if (isDataLoaded) {
+                    localStorage.setItem('itdispatch_requests', JSON.stringify(requests));
+                }
+            }, [requests, isDataLoaded]);
+
+            const Logo = ({ size = "large" }) => {
+                const sizes = { small: "h-10 w-auto", medium: "h-16 w-auto", large: "h-32 w-auto", xlarge: "h-48 w-auto" };
+                return <div className="logo-container"><img src={logoPath} alt="Hanimus LLC" className={sizes[size]} /></div>;
+            };
+
+            const LanguageSelector = () => {
+                return (
+                    <div className="fixed top-4 right-4 z-50">
+                        <select 
+                            value={language} 
+                            onChange={(e) => setLanguage(e.target.value)}
+                            className="bg-slate-800 border border-slate-600 text-white px-4 py-2 rounded-lg cursor-pointer hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+                        >
+                            <option value="en">🇬🇧 English</option>
+                            <option value="ar">🇸🇦 العربية</option>
+                            <option value="fr">🇫🇷 Français</option>
+                        </select>
+                    </div>
+                );
+            };
+
+            const TopNav = () => {
+                if (!currentUser) return null;
+                return (
+                    <div className="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                            <div className="flex justify-between items-center h-20">
+                                <div className="flex items-center gap-6">
+                                    <Logo size="small" />
+                                    {currentUser.role === 'admin' && (
+                                        <div className="flex gap-2">
+                                            <button onClick={() => setCurrentView('admin-dashboard')} className={`px-4 py-2 rounded-lg font-medium transition ${currentView === 'admin-dashboard' ? 'bg-red-900/50 text-red-300 border border-red-700' : 'text-slate-400 hover:bg-slate-800'}`}>📊 {t('requests')}</button>
+                                            <button onClick={() => setCurrentView('admin-technicians')} className={`px-4 py-2 rounded-lg font-medium transition relative ${currentView === 'admin-technicians' ? 'bg-red-900/50 text-red-300 border border-red-700' : 'text-slate-400 hover:bg-slate-800'}`}>
+                                                👥 {t('technicians')}
+                                                {pendingTechnicians.length > 0 && <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{pendingTechnicians.length}</span>}
+                                            </button>
+                                            <button onClick={() => setCurrentView('admin-customers')} className={`px-4 py-2 rounded-lg font-medium transition ${currentView === 'admin-customers' ? 'bg-red-900/50 text-red-300 border border-red-700' : 'text-slate-400 hover:bg-slate-800'}`}>🏢 {t('customers')}</button>
+                                        </div>
+                                    )}
+                                    {currentUser.role === 'customer' && (
+                                        <div className="flex gap-2">
+                                            <button onClick={() => setCurrentView('customer-dashboard')} className={`px-4 py-2 rounded-lg font-medium transition ${currentView === 'customer-dashboard' ? 'bg-red-900/50 text-red-300 border border-red-700' : 'text-slate-400 hover:bg-slate-800'}`}>📋 {t('myRequests')}</button>
+                                            <button onClick={() => setCurrentView('customer-new-request')} className={`px-4 py-2 rounded-lg font-medium transition ${currentView === 'customer-new-request' ? 'bg-red-900/50 text-red-300 border border-red-700' : 'text-slate-400 hover:bg-slate-800'}`}>➕ {t('newRequest')}</button>
+                                        </div>
+                                    )}
+                                    {currentUser.role === 'technician' && (
+                                        <button onClick={() => setCurrentView('technician-dashboard')} className="px-4 py-2 rounded-lg font-medium text-slate-400 hover:bg-slate-800">🔧 {t('myJobs')}</button>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <select 
+                                        value={language} 
+                                        onChange={(e) => setLanguage(e.target.value)}
+                                        className="bg-slate-800 border border-slate-600 text-white px-3 py-1.5 rounded-lg cursor-pointer hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm"
+                                    >
+                                        <option value="en">🇬🇧 EN</option>
+                                        <option value="ar">🇸🇦 AR</option>
+                                        <option value="fr">🇫🇷 FR</option>
+                                    </select>
+                                    <div className="text-right">
+                                        <p className="text-sm font-semibold text-white">{currentUser.name || currentUser.companyName}</p>
+                                        <p className="text-xs text-slate-400 capitalize">{currentUser.role}</p>
+                                    </div>
+                                    <button onClick={() => { 
+                                        setCurrentUser(null); 
+                                        setCurrentView('landing');
+                                        localStorage.removeItem('itdispatch_current_user');
+                                        localStorage.setItem('itdispatch_current_view', 'landing');
+                                    }} className="bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-lg text-slate-300 border border-slate-700">{t('logout')}</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            const LoginPage = () => {
+                const [email, setEmail] = useState('');
+                const [password, setPassword] = useState('');
+                const [error, setError] = useState('');
+
+                const handleLogin = (e) => {
+                    e.preventDefault();
+                    const user = users.find(u => u.email === email && u.password === password);
+                    if (user) {
+                        if (user.role === 'technician' && !user.approved) {
+                            setError('Account pending approval. Please wait for admin approval.');
+                            return;
+                        }
+                        setCurrentUser(user);
+                        if (user.role === 'admin') setCurrentView('admin-dashboard');
+                        else if (user.role === 'technician') setCurrentView('technician-dashboard');
+                        else setCurrentView('customer-dashboard');
+                    } else {
+                        setError('Invalid email or password');
+                    }
+                };
+
+                return (
+                    <div className="min-h-screen gradient-bg flex items-center justify-center p-4" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+                        <LanguageSelector />
+                        <div className="bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-md p-8">
+                            <div className="text-center mb-8">
+                                <div className="flex justify-center mb-6"><Logo size="medium" /></div>
+                                <h1 className="text-2xl font-bold text-white mb-2">{t('heroTitle')}</h1>
+                                <p className="text-slate-400">{t('loginTitle')}</p>
+                            </div>
+                            <form onSubmit={handleLogin} className="space-y-6">
+                                {error && <div className="bg-red-900/30 border border-red-500/50 text-red-300 px-4 py-3 rounded-lg text-sm">{error}</div>}
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">{t('email')}</label>
+                                    <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-3 bg-slate-900 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" required />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">{t('password')}</label>
+                                    <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 bg-slate-900 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" required />
+                                </div>
+                                <button type="submit" className="w-full bg-gradient-to-r from-red-700 to-red-900 text-white py-3 rounded-lg font-semibold hover:from-red-800 hover:to-red-950 shadow-lg">{t('login')}</button>
+                            </form>
+                            <div className="mt-6 space-y-2 text-center">
+                                <button onClick={() => setCurrentView('register')} className="text-red-400 hover:text-red-300 font-medium block w-full">{t('registerAsCustomer')}</button>
+                                <button onClick={() => setCurrentView('register-technician')} className="text-red-400 hover:text-red-300 font-medium block w-full">{t('applyAsTechnician')}</button>
+                                <button onClick={() => setCurrentView('landing')} className="text-slate-400 hover:text-slate-300 font-medium block w-full">{t('back')}</button>
+                            </div>
+                            <div className="mt-6 p-4 bg-slate-900/50 border border-slate-700 rounded-lg">
+                                <p className="text-xs text-slate-400 mb-2">{t('demoAccounts')}</p>
+                                <p className="text-xs text-slate-300">admin@hanimus.com / admin123</p>
+                                <p className="text-xs text-slate-300">customer@company.com / customer123</p>
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            const AdminDashboard = () => {
+                const [showAssignModal, setShowAssignModal] = useState(false);
+                const [selectedRequest, setSelectedRequest] = useState(null);
+
+                const handleAssignTech = (reqId, tech) => {
+                    setRequests(requests.map(r => r.id === reqId ? {...r, status: 'assigned', assignedTechnician: tech} : r));
+                    setTechnicians(technicians.map(t => t.id === tech.id ? {...t, status: 'on-job'} : t));
+                    setShowAssignModal(false);
+                    setSelectedRequest(null);
+                };
+
+                const updateStatus = (reqId, status) => {
+                    setRequests(requests.map(r => r.id === reqId ? {...r, status} : r));
+                };
+
+                const getStatusColor = (status) => {
+                    const colors = { 
+                        pending: 'bg-yellow-900/30 text-yellow-400 border-yellow-700', 
+                        assigned: 'bg-blue-900/30 text-blue-400 border-blue-700', 
+                        'in-progress': 'bg-purple-900/30 text-purple-400 border-purple-700',
+                        'awaiting-customer-review': 'bg-orange-900/30 text-orange-400 border-orange-700', 
+                        completed: 'bg-green-900/30 text-green-400 border-green-700' 
+                    };
+                    return colors[status] || 'bg-gray-900/30 text-gray-400 border-gray-700';
+                };
+
+                const getPriorityColor = (priority) => {
+                    const colors = { 
+                        low: 'bg-gray-900/30 text-gray-400', 
+                        medium: 'bg-blue-900/30 text-blue-400', 
+                        high: 'bg-orange-900/30 text-orange-400', 
+                        urgent: 'bg-red-900/30 text-red-400' 
+                    };
+                    return colors[priority] || 'bg-gray-900/30 text-gray-400';
+                };
+
+                return (
+                    <div className="min-h-screen bg-slate-950">
+                        <TopNav />
+                        <div className="max-w-7xl mx-auto px-4 py-8">
+                            <h2 className="text-3xl font-bold text-white mb-8">Service Requests Management</h2>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+                                <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 text-center">
+                                    <p className="text-sm text-slate-400 mb-2">Total</p>
+                                    <p className="text-3xl font-bold text-white">{requests.length}</p>
+                                </div>
+                                <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 text-center">
+                                    <p className="text-sm text-slate-400 mb-2">Pending</p>
+                                    <p className="text-3xl font-bold text-yellow-400">{requests.filter(r => r.status === 'pending').length}</p>
+                                </div>
+                                <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 text-center">
+                                    <p className="text-sm text-slate-400 mb-2">Active</p>
+                                    <p className="text-3xl font-bold text-blue-400">{requests.filter(r => r.status === 'assigned' || r.status === 'in-progress').length}</p>
+                                </div>
+                                <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 text-center">
+                                    <p className="text-sm text-slate-400 mb-2">Review</p>
+                                    <p className="text-3xl font-bold text-orange-400">{requests.filter(r => r.status === 'awaiting-customer-review').length}</p>
+                                </div>
+                                <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 text-center">
+                                    <p className="text-sm text-slate-400 mb-2">Completed</p>
+                                    <p className="text-3xl font-bold text-green-400">{requests.filter(r => r.status === 'completed').length}</p>
+                                </div>
+                            </div>
+
+                            <div className="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden">
+                                <div className="p-6 border-b border-slate-700">
+                                    <h3 className="text-xl font-bold text-white">All Requests</h3>
+                                </div>
+                                <div className="divide-y divide-slate-700">
+                                    {requests.length === 0 ? (
+                                        <div className="p-8 text-center text-slate-400">No service requests yet</div>
+                                    ) : (
+                                        requests.map(req => (
+                                            <div key={req.id} className="p-6 hover:bg-slate-700/30 transition">
+                                                <div className="flex justify-between items-start">
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-3 mb-2">
+                                                            <h4 className="text-lg font-semibold text-white">#{req.id} - {req.title}</h4>
+                                                            <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(req.status)}`}>
+                                                                {req.status === 'awaiting-customer-review' ? 'AWAITING REVIEW' : req.status.toUpperCase()}
+                                                            </span>
+                                                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${getPriorityColor(req.priority)}`}>{req.priority.toUpperCase()}</span>
+                                                        </div>
+                                                        <p className="text-slate-400 mb-3">{req.description}</p>
+                                                        <div className="flex flex-wrap gap-4 text-sm text-slate-500">
+                                                            <span>🏢 {req.customerName}</span>
+                                                            <span>📍 {req.location}</span>
+                                                            <span>📅 {req.preferredDate}</span>
+                                                            <span>🕐 {req.preferredTime}</span>
+                                                            <span>🏷️ {req.category}</span>
+                                                        </div>
+                                                        {req.assignedTechnician && (
+                                                            <div className="mt-3 flex items-center gap-2 bg-blue-900/20 rounded-lg px-3 py-2 inline-flex border border-blue-700">
+                                                                <span className="text-xl">{req.assignedTechnician.avatar}</span>
+                                                                <span className="text-sm text-blue-300"><strong>Assigned:</strong> {req.assignedTechnician.name}</span>
+                                                            </div>
+                                                        )}
+                                                        {req.comments && req.comments.length > 0 && (
+                                                            <div className="mt-3 space-y-2">
+                                                                <p className="text-sm font-semibold text-slate-300">Comments:</p>
+                                                                {req.comments.map((comment, idx) => (
+                                                                    <div key={idx} className="bg-slate-900 rounded-lg px-3 py-2 border border-slate-700">
+                                                                        <p className="text-xs text-slate-500">{comment.role === 'technician' ? '🔧' : '👤'} {comment.author} - {new Date(comment.timestamp).toLocaleString()}</p>
+                                                                        <p className="text-sm text-slate-300">{comment.text}</p>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex flex-col gap-2 ml-4">
+                                                        {req.status === 'pending' && (
+                                                            <button onClick={() => { setSelectedRequest(req); setShowAssignModal(true); }} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap">Assign Tech</button>
+                                                        )}
+                                                        {req.status === 'assigned' && (
+                                                            <button onClick={() => updateStatus(req.id, 'in-progress')} className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium">Start Work</button>
+                                                        )}
+                                                        {req.status === 'in-progress' && (
+                                                            <div className="bg-purple-900/30 text-purple-400 px-4 py-2 rounded-lg text-sm border border-purple-700 text-center">In Progress</div>
+                                                        )}
+                                                        {req.status === 'awaiting-customer-review' && (
+                                                            <div className="bg-orange-900/30 text-orange-400 px-4 py-2 rounded-lg text-sm border border-orange-700 text-center">Awaiting Review</div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+
+                            {showAssignModal && selectedRequest && (
+                                <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
+                                    <div className="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-3xl p-6">
+                                        <div className="flex justify-between items-center mb-6">
+                                            <h3 className="text-2xl font-bold text-white">Assign Technician</h3>
+                                            <button onClick={() => setShowAssignModal(false)} className="text-slate-400 hover:text-white text-2xl">✕</button>
+                                        </div>
+                                        <div className="mb-6 p-4 bg-slate-900 rounded-lg border border-slate-700">
+                                            <p className="text-white"><strong>Request:</strong> {selectedRequest.title}</p>
+                                            <p className="text-slate-400"><strong>Category:</strong> {selectedRequest.category}</p>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {technicians.filter(t => t.status === 'available' && t.approved).length === 0 ? (
+                                                <div className="col-span-2 text-center text-slate-400 py-8">No available technicians</div>
+                                            ) : (
+                                                technicians.filter(t => t.status === 'available' && t.approved).map(tech => (
+                                                    <button key={tech.id} onClick={() => handleAssignTech(selectedRequest.id, tech)} className="border-2 border-slate-600 hover:border-red-500 rounded-xl p-4 text-left transition bg-slate-900">
+                                                        <div className="flex items-center gap-3 mb-2">
+                                                            <span className="text-3xl">{tech.avatar}</span>
+                                                            <div>
+                                                                <h4 className="font-semibold text-white">{tech.name}</h4>
+                                                                <p className="text-sm text-slate-400">{tech.specialization}</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {tech.skills.slice(0, 3).map((skill, idx) => (
+                                                                <span key={idx} className="bg-blue-900/30 text-blue-300 px-2 py-0.5 rounded text-xs">{skill}</span>
+                                                            ))}
+                                                        </div>
+                                                        <div className="mt-2 text-sm text-green-400">✓ Available</div>
+                                                    </button>
+                                                ))
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                );
+            };
+
+            const AdminTechniciansPage = () => {
+                const approveTech = (tech) => {
+                    const updatedUsers = users.map(u => u.id === tech.userId ? {...u, approved: true} : u);
+                    setUsers(updatedUsers);
+                    setTechnicians([...technicians, {...tech, approved: true, status: 'available'}]);
+                    setPendingTechnicians(pendingTechnicians.filter(t => t.id !== tech.id));
+                };
+
+                const rejectTech = (tech) => {
+                    if (confirm(`Reject ${tech.name}'s application?`)) {
+                        setPendingTechnicians(pendingTechnicians.filter(t => t.id !== tech.id));
+                        setUsers(users.filter(u => u.id !== tech.userId));
+                    }
+                };
+
+                const deleteTech = (tech) => {
+                    if (confirm(`Remove ${tech.name} from the system?`)) {
+                        setTechnicians(technicians.filter(t => t.id !== tech.id));
+                        setUsers(users.filter(u => u.id !== tech.userId));
+                    }
+                };
+
+                return (
+                    <div className="min-h-screen bg-slate-950">
+                        <TopNav />
+                        <div className="max-w-7xl mx-auto px-4 py-8">
+                            <h2 className="text-3xl font-bold text-white mb-8">Technician Management</h2>
+
+                            {pendingTechnicians.length > 0 && (
+                                <div className="mb-8 bg-slate-800 border border-orange-700 rounded-xl overflow-hidden">
+                                    <div className="p-6 bg-orange-900/20 border-b border-orange-700">
+                                        <h3 className="text-xl font-bold text-white">⏳ Pending Approvals ({pendingTechnicians.length})</h3>
+                                    </div>
+                                    <div className="divide-y divide-slate-700">
+                                        {pendingTechnicians.map(tech => (
+                                            <div key={tech.id} className="p-6">
+                                                <div className="flex justify-between items-start">
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-3 mb-3">
+                                                            <span className="text-4xl">{tech.avatar}</span>
+                                                            <div>
+                                                                <h4 className="text-lg font-semibold text-white">{tech.name}</h4>
+                                                                <p className="text-sm text-slate-400">{tech.specialization}</p>
+                                                                <p className="text-xs text-slate-500">{tech.email}</p>
+                                                                <p className="text-xs text-slate-500">📞 {tech.phone}</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="grid md:grid-cols-2 gap-4 text-sm">
+                                                            <div>
+                                                                <p className="text-slate-400"><strong>Experience:</strong> {tech.experience}</p>
+                                                                <p className="text-slate-400"><strong>Education:</strong> {tech.diploma}</p>
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-slate-400 mb-1"><strong>Skills:</strong></p>
+                                                                <div className="flex flex-wrap gap-1">
+                                                                    {tech.skills.map((skill, idx) => (
+                                                                        <span key={idx} className="bg-blue-900/30 text-blue-300 px-2 py-0.5 rounded text-xs">{skill}</span>
+                                                                    ))}
+                                                                </div>
+                                                                <p className="text-slate-400 mt-2"><strong>Certifications:</strong></p>
+                                                                <div className="flex flex-wrap gap-1 mt-1">
+                                                                    {tech.certifications.map((cert, idx) => (
+                                                                        <span key={idx} className="bg-green-900/30 text-green-300 px-2 py-0.5 rounded text-xs">{cert}</span>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex flex-col gap-2 ml-4">
+                                                        <button onClick={() => approveTech(tech)} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap">✓ Approve</button>
+                                                        <button onClick={() => rejectTech(tech)} className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap">✕ Reject</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden">
+                                <div className="p-6 border-b border-slate-700">
+                                    <h3 className="text-xl font-bold text-white">👥 Approved Technicians ({technicians.filter(t => t.approved).length})</h3>
+                                </div>
+                                <div className="p-6">
+                                    {technicians.filter(t => t.approved).length === 0 ? (
+                                        <div className="text-center text-slate-400 py-8">No approved technicians yet</div>
+                                    ) : (
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                            {technicians.filter(t => t.approved).map(tech => (
+                                                <div key={tech.id} className="bg-slate-900 border border-slate-700 rounded-lg p-4 card-hover">
+                                                    <div className="flex items-start gap-3 mb-3">
+                                                        <span className="text-4xl">{tech.avatar}</span>
+                                                        <div className="flex-1">
+                                                            <h4 className="font-semibold text-white">{tech.name}</h4>
+                                                            <p className="text-xs text-slate-400 mb-1">{tech.specialization}</p>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className={`w-2 h-2 rounded-full ${tech.status === 'available' ? 'bg-green-500' : 'bg-orange-500'}`}></span>
+                                                                <span className="text-xs text-slate-400 capitalize">{tech.status}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex flex-wrap gap-1 mb-2">
+                                                        {tech.skills.slice(0, 4).map((skill, idx) => (
+                                                            <span key={idx} className="bg-blue-900/30 text-blue-300 px-2 py-0.5 rounded text-xs">{skill}</span>
+                                                        ))}
+                                                    </div>
+                                                    <div className="text-xs text-slate-500 space-y-1">
+                                                        <p><strong>Experience:</strong> {tech.experience}</p>
+                                                        <p><strong>Email:</strong> {tech.email}</p>
+                                                    </div>
+                                                    <button onClick={() => deleteTech(tech)} className="mt-3 w-full bg-red-900/30 hover:bg-red-900/50 text-red-400 px-3 py-1 rounded text-xs border border-red-700">Remove</button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            const AdminCustomersPage = () => {
+                const customers = users.filter(u => u.role === 'customer');
+                
+                const deleteCustomer = (customer) => {
+                    if (confirm(`Remove ${customer.companyName} from the system?`)) {
+                        setUsers(users.filter(u => u.id !== customer.id));
+                        // Also remove their requests
+                        setRequests(requests.filter(r => r.customerId !== customer.id));
+                    }
+                };
+
+                return (
+                    <div className="min-h-screen bg-slate-950">
+                        <TopNav />
+                        <div className="max-w-7xl mx-auto px-4 py-8">
+                            <h2 className="text-3xl font-bold text-white mb-8">Customers ({customers.length})</h2>
+                            <div className="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden">
+                                <div className="divide-y divide-slate-700">
+                                    {customers.length === 0 ? (
+                                        <div className="p-8 text-center text-slate-400">No customers registered yet</div>
+                                    ) : (
+                                        customers.map(customer => (
+                                            <div key={customer.id} className="p-6 hover:bg-slate-700/30 transition">
+                                                <div className="flex justify-between items-start">
+                                                    <div className="flex-1">
+                                                        <h3 className="text-lg font-semibold text-white mb-2">{customer.companyName}</h3>
+                                                        <div className="text-sm text-slate-400 space-y-1">
+                                                            <p>📧 {customer.email}</p>
+                                                            <p>📞 {customer.phone || 'N/A'}</p>
+                                                            <p>📍 {customer.address || 'N/A'}</p>
+                                                            <p className="text-xs text-slate-500">Requests: {requests.filter(r => r.customerId === customer.id).length}</p>
+                                                        </div>
+                                                    </div>
+                                                    <button onClick={() => deleteCustomer(customer)} className="bg-red-900/30 hover:bg-red-900/50 text-red-400 px-4 py-2 rounded-lg text-sm border border-red-700">Remove</button>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            const RegisterPage = () => {
+                const [formData, setFormData] = useState({ 
+                    email: '', 
+                    password: '', 
+                    confirmPassword: '', 
+                    companyName: '', 
+                    phone: '', 
+                    address: '' 
+                });
+                const [error, setError] = useState('');
+
+                const handleRegister = (e) => {
+                    e.preventDefault();
+                    if (formData.password !== formData.confirmPassword) { 
+                        setError('Passwords do not match'); 
+                        return; 
+                    }
+                    if (users.find(u => u.email === formData.email)) { 
+                        setError('Email already registered'); 
+                        return; 
+                    }
+                    const newUser = { 
+                        id: Date.now(), 
+                        email: formData.email,
+                        password: formData.password,
+                        role: 'customer',
+                        companyName: formData.companyName,
+                        phone: formData.phone,
+                        address: formData.address
+                    };
+                    setUsers([...users, newUser]);
+                    alert('Registration successful! You can now sign in.');
+                    setCurrentView('login');
+                };
+
+                return (
+                    <div className="min-h-screen gradient-bg flex items-center justify-center p-4">
+                        <div className="bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-2xl p-8">
+                            <div className="text-center mb-8">
+                                <div className="flex justify-center mb-4"><Logo size="medium" /></div>
+                                <h1 className="text-3xl font-bold text-white mb-2">Customer Registration</h1>
+                                <p className="text-slate-400">Create your account to submit service requests</p>
+                            </div>
+                            <form onSubmit={handleRegister} className="space-y-4">
+                                {error && <div className="bg-red-900/30 border border-red-500/50 text-red-300 px-4 py-3 rounded-lg text-sm">{error}</div>}
+                                <div className="grid md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">Company Name *</label>
+                                        <input type="text" value={formData.companyName} onChange={(e) => setFormData({...formData, companyName: e.target.value})} className="w-full px-4 py-3 bg-slate-900 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" required />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">Email *</label>
+                                        <input type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="w-full px-4 py-3 bg-slate-900 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" required />
+                                    </div>
+                                </div>
+                                <div className="grid md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">Password *</label>
+                                        <input type="password" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} className="w-full px-4 py-3 bg-slate-900 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" required />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">Confirm Password *</label>
+                                        <input type="password" value={formData.confirmPassword} onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})} className="w-full px-4 py-3 bg-slate-900 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" required />
+                                    </div>
+                                </div>
+                                <div className="grid md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">Phone *</label>
+                                        <input type="tel" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} className="w-full px-4 py-3 bg-slate-900 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" required />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">Address *</label>
+                                        <input type="text" value={formData.address} onChange={(e) => setFormData({...formData, address: e.target.value})} className="w-full px-4 py-3 bg-slate-900 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" required />
+                                    </div>
+                                </div>
+                                <div className="flex gap-4 pt-4">
+                                    <button type="submit" className="flex-1 bg-gradient-to-r from-red-700 to-red-900 text-white py-3 rounded-lg font-semibold hover:from-red-800 hover:to-red-950">Register</button>
+                                    <button type="button" onClick={() => setCurrentView('login')} className="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                );
+            };
+
+            const RegisterTechnicianPage = () => {
+                const [formData, setFormData] = useState({ 
+                    name: '', 
+                    email: '', 
+                    password: '', 
+                    confirmPassword: '', 
+                    phone: '', 
+                    specialization: '', 
+                    skills: '', 
+                    certifications: '', 
+                    experience: '', 
+                    diploma: '' 
+                });
+                const [error, setError] = useState('');
+
+                const handleRegister = (e) => {
+                    e.preventDefault();
+                    if (formData.password !== formData.confirmPassword) { 
+                        setError('Passwords do not match'); 
+                        return; 
+                    }
+                    if (users.find(u => u.email === formData.email)) { 
+                        setError('Email already registered'); 
+                        return; 
+                    }
+                    
+                    const newUserId = Date.now();
+                    const newUser = { 
+                        id: newUserId, 
+                        email: formData.email, 
+                        password: formData.password, 
+                        role: 'technician', 
+                        name: formData.name, 
+                        approved: false 
+                    };
+                    
+                    const newTech = { 
+                        id: Date.now() + 1, 
+                        userId: newUserId, 
+                        name: formData.name,
+                        email: formData.email,
+                        phone: formData.phone,
+                        specialization: formData.specialization,
+                        skills: formData.skills.split(',').map(s => s.trim()),
+                        certifications: formData.certifications.split(',').map(s => s.trim()),
+                        experience: formData.experience,
+                        diploma: formData.diploma,
+                        approved: false, 
+                        avatar: '👤' 
+                    };
+                    
+                    setUsers([...users, newUser]);
+                    setPendingTechnicians([...pendingTechnicians, newTech]);
+                    alert('Application submitted successfully! Please wait for admin approval.');
+                    setCurrentView('login');
+                };
+
+                return (
+                    <div className="min-h-screen gradient-bg flex items-center justify-center p-4">
+                        <div className="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-3xl p-8 my-8 max-h-[90vh] overflow-y-auto">
+                            <div className="text-center mb-8">
+                                <div className="flex justify-center mb-4"><Logo size="medium" /></div>
+                                <h1 className="text-3xl font-bold text-white mb-2">Technician Application</h1>
+                                <p className="text-slate-400">Join our team of IT professionals</p>
+                            </div>
+                            <form onSubmit={handleRegister} className="space-y-6">
+                                {error && <div className="bg-red-900/30 border border-red-500/50 text-red-300 px-4 py-3 rounded-lg text-sm">{error}</div>}
+                                
+                                <div className="bg-red-900/20 border border-red-700 p-4 rounded-lg">
+                                    <h3 className="font-semibold text-red-300">📋 Personal Information</h3>
+                                </div>
+                                
+                                <div className="grid md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">Full Name *</label>
+                                        <input type="text" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="w-full px-4 py-3 bg-slate-900 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" required />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">Email *</label>
+                                        <input type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="w-full px-4 py-3 bg-slate-900 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" required />
+                                    </div>
+                                </div>
+                                
+                                <div className="grid md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">Password *</label>
+                                        <input type="password" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} className="w-full px-4 py-3 bg-slate-900 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" required />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">Confirm Password *</label>
+                                        <input type="password" value={formData.confirmPassword} onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})} className="w-full px-4 py-3 bg-slate-900 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" required />
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">Phone *</label>
+                                    <input type="tel" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} className="w-full px-4 py-3 bg-slate-900 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" required />
+                                </div>
+                                
+                                <div className="bg-blue-900/20 border border-blue-700 p-4 rounded-lg">
+                                    <h3 className="font-semibold text-blue-300">🎓 Professional Qualifications</h3>
+                                </div>
+                                
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">Specialization *</label>
+                                    <select value={formData.specialization} onChange={(e) => setFormData({...formData, specialization: e.target.value})} className="w-full px-4 py-3 bg-slate-900 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" required>
+                                        <option value="">Select Specialization</option>
+                                        <option value="Network Infrastructure">Network Infrastructure</option>
+                                        <option value="Hardware Support">Hardware Support</option>
+                                        <option value="Software & Security">Software & Security</option>
+                                        <option value="Cloud Services">Cloud Services</option>
+                                        <option value="Database Administration">Database Administration</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">Skills * (comma-separated)</label>
+                                    <input type="text" value={formData.skills} onChange={(e) => setFormData({...formData, skills: e.target.value})} className="w-full px-4 py-3 bg-slate-900 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="Windows, Linux, Cisco, VPN" required />
+                                </div>
+                                
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">Certifications * (comma-separated)</label>
+                                    <input type="text" value={formData.certifications} onChange={(e) => setFormData({...formData, certifications: e.target.value})} className="w-full px-4 py-3 bg-slate-900 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="CCNA, A+, CompTIA Security+" required />
+                                </div>
+                                
+                                <div className="grid md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">Experience *</label>
+                                        <input type="text" value={formData.experience} onChange={(e) => setFormData({...formData, experience: e.target.value})} className="w-full px-4 py-3 bg-slate-900 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="5 years" required />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">Diploma/Degree *</label>
+                                        <input type="text" value={formData.diploma} onChange={(e) => setFormData({...formData, diploma: e.target.value})} className="w-full px-4 py-3 bg-slate-900 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="BS Computer Science" required />
+                                    </div>
+                                </div>
+                                
+                                <div className="flex gap-4 pt-4">
+                                    <button type="submit" className="flex-1 bg-gradient-to-r from-red-700 to-red-900 text-white py-3 rounded-lg font-semibold hover:from-red-800 hover:to-red-950">Submit Application</button>
+                                    <button type="button" onClick={() => setCurrentView('login')} className="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                );
+            };
+
+            const CustomerDashboard = () => {
+                const myRequests = requests.filter(r => r.customerId === currentUser.id);
+                const [showReviewModal, setShowReviewModal] = useState(false);
+                const [selectedRequest, setSelectedRequest] = useState(null);
+                const [reviewComment, setReviewComment] = useState('');
+
+                const handleReviewRequest = (req) => {
+                    setSelectedRequest(req);
+                    setShowReviewModal(true);
+                };
+
+                const submitReview = () => {
+                    if (!reviewComment.trim()) {
+                        alert('Please add a review comment before closing the ticket');
+                        return;
+                    }
+                    const customerComment = {
+                        author: currentUser.companyName,
+                        role: 'customer',
+                        text: reviewComment,
+                        timestamp: new Date().toISOString()
+                    };
+                    const updatedRequest = requests.find(r => r.id === selectedRequest.id);
+                    const updatedComments = [...(updatedRequest.comments || []), customerComment];
+                    
+                    setRequests(requests.map(r => r.id === selectedRequest.id ? 
+                        {...r, status: 'completed', comments: updatedComments} : r
+                    ));
+                    
+                    // Free up the technician
+                    if (selectedRequest.assignedTechnician) {
+                        setTechnicians(technicians.map(t => 
+                            t.id === selectedRequest.assignedTechnician.id ? {...t, status: 'available'} : t
+                        ));
+                    }
+                    
+                    setShowReviewModal(false);
+                    setReviewComment('');
+                    setSelectedRequest(null);
+                    alert('Ticket closed successfully!');
+                };
+
+                return (
+                    <div className="min-h-screen bg-slate-950">
+                        <TopNav />
+                        <div className="max-w-7xl mx-auto px-4 py-8">
+                            <div className="flex justify-between items-center mb-8">
+                                <h2 className="text-3xl font-bold text-white">My Service Requests</h2>
+                                <button onClick={() => setCurrentView('customer-new-request')} className="bg-gradient-to-r from-red-700 to-red-900 text-white px-6 py-3 rounded-lg font-semibold hover:from-red-800 hover:to-red-950">+ New Request</button>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+                                <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 text-center">
+                                    <p className="text-sm text-slate-400 mb-2">Total</p>
+                                    <p className="text-3xl font-bold text-white">{myRequests.length}</p>
+                                </div>
+                                <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 text-center">
+                                    <p className="text-sm text-slate-400 mb-2">Pending</p>
+                                    <p className="text-3xl font-bold text-yellow-400">{myRequests.filter(r => r.status === 'pending').length}</p>
+                                </div>
+                                <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 text-center">
+                                    <p className="text-sm text-slate-400 mb-2">In Progress</p>
+                                    <p className="text-3xl font-bold text-purple-400">{myRequests.filter(r => r.status === 'in-progress' || r.status === 'assigned').length}</p>
+                                </div>
+                                <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 text-center">
+                                    <p className="text-sm text-slate-400 mb-2">Ready to Review</p>
+                                    <p className="text-3xl font-bold text-orange-400">{myRequests.filter(r => r.status === 'awaiting-customer-review').length}</p>
+                                </div>
+                                <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 text-center">
+                                    <p className="text-sm text-slate-400 mb-2">Completed</p>
+                                    <p className="text-3xl font-bold text-green-400">{myRequests.filter(r => r.status === 'completed').length}</p>
+                                </div>
+                            </div>
+
+                            <div className="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden">
+                                {myRequests.length === 0 ? (
+                                    <div className="p-12 text-center">
+                                        <p className="text-slate-400 mb-4">You haven't submitted any service requests yet</p>
+                                        <button onClick={() => setCurrentView('customer-new-request')} className="bg-gradient-to-r from-red-700 to-red-900 text-white px-6 py-3 rounded-lg font-semibold hover:from-red-800 hover:to-red-950">Create First Request</button>
+                                    </div>
+                                ) : (
+                                    <div className="divide-y divide-slate-700">
+                                        {myRequests.map(req => (
+                                            <div key={req.id} className="p-6">
+                                                <div className="flex justify-between items-start">
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-3 mb-2">
+                                                            <h4 className="text-lg font-semibold text-white">#{req.id} - {req.title}</h4>
+                                                            <span className={`px-3 py-1 rounded-full text-xs font-medium border ${
+                                                                req.status === 'pending' ? 'bg-yellow-900/30 text-yellow-400 border-yellow-700' : 
+                                                                req.status === 'assigned' ? 'bg-blue-900/30 text-blue-400 border-blue-700' : 
+                                                                req.status === 'in-progress' ? 'bg-purple-900/30 text-purple-400 border-purple-700' : 
+                                                                req.status === 'awaiting-customer-review' ? 'bg-orange-900/30 text-orange-400 border-orange-700' :
+                                                                'bg-green-900/30 text-green-400 border-green-700'
+                                                            }`}>
+                                                                {req.status === 'awaiting-customer-review' ? 'READY FOR REVIEW' : req.status.toUpperCase()}
+                                                            </span>
+                                                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${req.priority === 'urgent' ? 'bg-red-900/30 text-red-400' : req.priority === 'high' ? 'bg-orange-900/30 text-orange-400' : req.priority === 'medium' ? 'bg-blue-900/30 text-blue-400' : 'bg-gray-900/30 text-gray-400'}`}>
+                                                                {req.priority.toUpperCase()}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-slate-400 mb-3">{req.description}</p>
+                                                        <div className="flex flex-wrap gap-4 text-sm text-slate-500">
+                                                            <span>📍 {req.location}</span>
+                                                            <span>📅 {req.preferredDate}</span>
+                                                            <span>🕐 {req.preferredTime}</span>
+                                                            <span>🏷️ {req.category}</span>
+                                                        </div>
+                                                        {req.assignedTechnician && (
+                                                            <div className="mt-3 flex items-center gap-2 bg-blue-900/20 rounded-lg px-3 py-2 inline-flex border border-blue-700">
+                                                                <span className="text-xl">{req.assignedTechnician.avatar}</span>
+                                                                <div>
+                                                                    <p className="text-sm text-blue-300"><strong>Assigned Technician:</strong></p>
+                                                                    <p className="text-sm text-blue-200">{req.assignedTechnician.name}</p>
+                                                                    <p className="text-xs text-blue-400">{req.assignedTechnician.email}</p>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                        {req.comments && req.comments.length > 0 && (
+                                                            <div className="mt-3 space-y-2">
+                                                                <p className="text-sm font-semibold text-slate-300">Comments:</p>
+                                                                {req.comments.map((comment, idx) => (
+                                                                    <div key={idx} className="bg-slate-900 rounded-lg px-3 py-2 border border-slate-700">
+                                                                        <p className="text-xs text-slate-500">{comment.role === 'technician' ? '🔧' : '👤'} {comment.author} - {new Date(comment.timestamp).toLocaleString()}</p>
+                                                                        <p className="text-sm text-slate-300">{comment.text}</p>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex flex-col gap-2 ml-4">
+                                                        {req.status === 'awaiting-customer-review' && (
+                                                            <button onClick={() => handleReviewRequest(req)} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap">Review & Close</button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {showReviewModal && selectedRequest && (
+                                <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
+                                    <div className="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-2xl p-6">
+                                        <div className="flex justify-between items-center mb-6">
+                                            <h3 className="text-2xl font-bold text-white">Review & Close Ticket</h3>
+                                            <button onClick={() => setShowReviewModal(false)} className="text-slate-400 hover:text-white text-2xl">✕</button>
+                                        </div>
+                                        <div className="mb-6 p-4 bg-slate-900 rounded-lg border border-slate-700">
+                                            <p className="text-white"><strong>Request:</strong> {selectedRequest.title}</p>
+                                            <p className="text-slate-400"><strong>Technician:</strong> {selectedRequest.assignedTechnician?.name}</p>
+                                        </div>
+                                        {selectedRequest.comments && selectedRequest.comments.length > 0 && (
+                                            <div className="mb-6 p-4 bg-slate-900 rounded-lg border border-slate-700">
+                                                <p className="text-sm font-semibold text-slate-300 mb-2">Technician's Completion Notes:</p>
+                                                {selectedRequest.comments.filter(c => c.role === 'technician').map((comment, idx) => (
+                                                    <div key={idx} className="mb-2">
+                                                        <p className="text-xs text-slate-500">{new Date(comment.timestamp).toLocaleString()}</p>
+                                                        <p className="text-sm text-slate-300">{comment.text}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                        <div className="mb-6">
+                                            <label className="block text-sm font-medium text-slate-300 mb-2">Your Review / Feedback *</label>
+                                            <textarea 
+                                                value={reviewComment} 
+                                                onChange={(e) => setReviewComment(e.target.value)} 
+                                                className="w-full px-4 py-3 bg-slate-900 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" 
+                                                rows="4" 
+                                                placeholder="Please confirm the work was completed satisfactorily and add any feedback..."
+                                                required
+                                            />
+                                        </div>
+                                        <div className="flex gap-4">
+                                            <button onClick={submitReview} className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold">Close Ticket</button>
+                                            <button onClick={() => setShowReviewModal(false)} className="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg">Cancel</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                );
+            };
+
+            const CustomerNewRequest = () => {
+                const [formData, setFormData] = useState({
+                    title: '',
+                    description: '',
+                    category: '',
+                    priority: 'medium',
+                    location: '',
+                    preferredDate: '',
+                    preferredTime: ''
+                });
+
+                const handleSubmit = (e) => {
+                    e.preventDefault();
+                    const newRequest = {
+                        id: Date.now(),
+                        customerId: currentUser.id,
+                        customerName: currentUser.companyName,
+                        ...formData,
+                        status: 'pending',
+                        assignedTechnician: null,
+                        createdAt: new Date().toISOString(),
+                        comments: []
+                    };
+                    setRequests([...requests, newRequest]);
+                    alert('Service request submitted successfully!');
+                    setCurrentView('customer-dashboard');
+                };
+
+                return (
+                    <div className="min-h-screen bg-slate-950">
+                        <TopNav />
+                        <div className="max-w-3xl mx-auto px-4 py-8">
+                            <h2 className="text-3xl font-bold text-white mb-8">New Service Request</h2>
+                            <div className="bg-slate-800 border border-slate-700 rounded-xl p-8">
+                                <form onSubmit={handleSubmit} className="space-y-6">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">Request Title *</label>
+                                        <input type="text" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} className="w-full px-4 py-3 bg-slate-900 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="e.g., Network connectivity issues" required />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">Description *</label>
+                                        <textarea value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full px-4 py-3 bg-slate-900 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" rows="4" placeholder="Describe the issue in detail..." required></textarea>
+                                    </div>
+
+                                    <div className="grid md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-300 mb-2">Category *</label>
+                                            <select value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} className="w-full px-4 py-3 bg-slate-900 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" required>
+                                                <option value="">Select Category</option>
+                                                <option value="network">Network</option>
+                                                <option value="hardware">Hardware</option>
+                                                <option value="software">Software</option>
+                                                <option value="security">Security</option>
+                                                <option value="other">Other</option>
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-300 mb-2">Priority *</label>
+                                            <select value={formData.priority} onChange={(e) => setFormData({...formData, priority: e.target.value})} className="w-full px-4 py-3 bg-slate-900 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" required>
+                                                <option value="low">Low</option>
+                                                <option value="medium">Medium</option>
+                                                <option value="high">High</option>
+                                                <option value="urgent">Urgent</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">Location *</label>
+                                        <input type="text" value={formData.location} onChange={(e) => setFormData({...formData, location: e.target.value})} className="w-full px-4 py-3 bg-slate-900 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="Building, Floor, Room" required />
+                                    </div>
+
+                                    <div className="grid md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-300 mb-2">Preferred Date *</label>
+                                            <input type="date" value={formData.preferredDate} onChange={(e) => setFormData({...formData, preferredDate: e.target.value})} className="w-full px-4 py-3 bg-slate-900 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" required />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-300 mb-2">Preferred Time *</label>
+                                            <select value={formData.preferredTime} onChange={(e) => setFormData({...formData, preferredTime: e.target.value})} className="w-full px-4 py-3 bg-slate-900 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500" required>
+                                                <option value="">Select Time</option>
+                                                <option value="08:00-10:00">08:00 - 10:00</option>
+                                                <option value="10:00-12:00">10:00 - 12:00</option>
+                                                <option value="12:00-14:00">12:00 - 14:00</option>
+                                                <option value="14:00-16:00">14:00 - 16:00</option>
+                                                <option value="16:00-18:00">16:00 - 18:00</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-4 pt-4">
+                                        <button type="submit" className="flex-1 bg-gradient-to-r from-red-700 to-red-900 text-white py-3 rounded-lg font-semibold hover:from-red-800 hover:to-red-950">Submit Request</button>
+                                        <button type="button" onClick={() => setCurrentView('customer-dashboard')} className="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg">Cancel</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            const TechnicianDashboard = () => {
+                const myJobs = requests.filter(r => r.assignedTechnician && r.assignedTechnician.email === currentUser.email);
+                const [showCompleteModal, setShowCompleteModal] = useState(false);
+                const [selectedRequest, setSelectedRequest] = useState(null);
+                const [completionComment, setCompletionComment] = useState('');
+
+                const acceptJob = (reqId) => {
+                    setRequests(requests.map(r => r.id === reqId ? {...r, status: 'in-progress'} : r));
+                };
+
+                const handleCompleteJob = (req) => {
+                    setSelectedRequest(req);
+                    setShowCompleteModal(true);
+                };
+
+                const submitCompletion = () => {
+                    if (!completionComment.trim()) {
+                        alert('Please add a completion comment');
+                        return;
+                    }
+                    const techComment = {
+                        author: currentUser.name,
+                        role: 'technician',
+                        text: completionComment,
+                        timestamp: new Date().toISOString()
+                    };
+                    const updatedRequest = requests.find(r => r.id === selectedRequest.id);
+                    const updatedComments = [...(updatedRequest.comments || []), techComment];
+                    
+                    setRequests(requests.map(r => r.id === selectedRequest.id ? 
+                        {...r, status: 'awaiting-customer-review', comments: updatedComments} : r
+                    ));
+                    
+                    setShowCompleteModal(false);
+                    setCompletionComment('');
+                    setSelectedRequest(null);
+                    alert('Job marked as complete. Waiting for customer review.');
+                };
+
+                return (
+                    <div className="min-h-screen bg-slate-950">
+                        <TopNav />
+                        <div className="max-w-7xl mx-auto px-4 py-8">
+                            <h2 className="text-3xl font-bold text-white mb-8">My Assigned Jobs</h2>
+
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                                <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 text-center">
+                                    <p className="text-sm text-slate-400 mb-2">Total Jobs</p>
+                                    <p className="text-3xl font-bold text-white">{myJobs.length}</p>
+                                </div>
+                                <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 text-center">
+                                    <p className="text-sm text-slate-400 mb-2">Active</p>
+                                    <p className="text-3xl font-bold text-purple-400">{myJobs.filter(r => r.status === 'assigned' || r.status === 'in-progress').length}</p>
+                                </div>
+                                <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 text-center">
+                                    <p className="text-sm text-slate-400 mb-2">Awaiting Review</p>
+                                    <p className="text-3xl font-bold text-orange-400">{myJobs.filter(r => r.status === 'awaiting-customer-review').length}</p>
+                                </div>
+                                <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 text-center">
+                                    <p className="text-sm text-slate-400 mb-2">Completed</p>
+                                    <p className="text-3xl font-bold text-green-400">{myJobs.filter(r => r.status === 'completed').length}</p>
+                                </div>
+                            </div>
+
+                            <div className="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden">
+                                {myJobs.length === 0 ? (
+                                    <div className="p-12 text-center text-slate-400">
+                                        No jobs assigned yet. Check back later!
+                                    </div>
+                                ) : (
+                                    <div className="divide-y divide-slate-700">
+                                        {myJobs.map(req => (
+                                            <div key={req.id} className="p-6">
+                                                <div className="flex justify-between items-start">
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-3 mb-2">
+                                                            <h4 className="text-lg font-semibold text-white">#{req.id} - {req.title}</h4>
+                                                            <span className={`px-3 py-1 rounded-full text-xs font-medium border ${
+                                                                req.status === 'assigned' ? 'bg-blue-900/30 text-blue-400 border-blue-700' : 
+                                                                req.status === 'in-progress' ? 'bg-purple-900/30 text-purple-400 border-purple-700' : 
+                                                                req.status === 'awaiting-customer-review' ? 'bg-orange-900/30 text-orange-400 border-orange-700' :
+                                                                'bg-green-900/30 text-green-400 border-green-700'
+                                                            }`}>
+                                                                {req.status === 'awaiting-customer-review' ? 'AWAITING REVIEW' : req.status.toUpperCase()}
+                                                            </span>
+                                                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${req.priority === 'urgent' ? 'bg-red-900/30 text-red-400' : req.priority === 'high' ? 'bg-orange-900/30 text-orange-400' : 'bg-blue-900/30 text-blue-400'}`}>
+                                                                {req.priority.toUpperCase()}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-slate-400 mb-3">{req.description}</p>
+                                                        <div className="flex flex-wrap gap-4 text-sm text-slate-500">
+                                                            <span>🏢 {req.customerName}</span>
+                                                            <span>📍 {req.location}</span>
+                                                            <span>📅 {req.preferredDate}</span>
+                                                            <span>🕐 {req.preferredTime}</span>
+                                                            <span>🏷️ {req.category}</span>
+                                                        </div>
+                                                        {req.comments && req.comments.length > 0 && (
+                                                            <div className="mt-3 space-y-2">
+                                                                {req.comments.map((comment, idx) => (
+                                                                    <div key={idx} className="bg-slate-900 rounded-lg px-3 py-2 border border-slate-700">
+                                                                        <p className="text-xs text-slate-500">{comment.role === 'technician' ? '🔧' : '👤'} {comment.author} - {new Date(comment.timestamp).toLocaleString()}</p>
+                                                                        <p className="text-sm text-slate-300">{comment.text}</p>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex flex-col gap-2 ml-4">
+                                                        {req.status === 'assigned' && (
+                                                            <button onClick={() => acceptJob(req.id)} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap">Accept Job</button>
+                                                        )}
+                                                        {req.status === 'in-progress' && (
+                                                            <button onClick={() => handleCompleteJob(req)} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap">Mark Complete</button>
+                                                        )}
+                                                        {req.status === 'awaiting-customer-review' && (
+                                                            <div className="bg-orange-900/30 text-orange-400 px-4 py-2 rounded-lg text-sm border border-orange-700">Awaiting Review</div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {showCompleteModal && selectedRequest && (
+                                <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
+                                    <div className="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-2xl p-6">
+                                        <div className="flex justify-between items-center mb-6">
+                                            <h3 className="text-2xl font-bold text-white">Complete Job</h3>
+                                            <button onClick={() => setShowCompleteModal(false)} className="text-slate-400 hover:text-white text-2xl">✕</button>
+                                        </div>
+                                        <div className="mb-6 p-4 bg-slate-900 rounded-lg border border-slate-700">
+                                            <p className="text-white"><strong>Request:</strong> {selectedRequest.title}</p>
+                                            <p className="text-slate-400"><strong>Customer:</strong> {selectedRequest.customerName}</p>
+                                        </div>
+                                        <div className="mb-6">
+                                            <label className="block text-sm font-medium text-slate-300 mb-2">Completion Notes *</label>
+                                            <textarea 
+                                                value={completionComment} 
+                                                onChange={(e) => setCompletionComment(e.target.value)} 
+                                                className="w-full px-4 py-3 bg-slate-900 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" 
+                                                rows="4" 
+                                                placeholder="Describe what work was completed, parts replaced, or any other relevant details..."
+                                                required
+                                            />
+                                        </div>
+                                        <div className="flex gap-4">
+                                            <button onClick={submitCompletion} className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold">Submit Completion</button>
+                                            <button onClick={() => setShowCompleteModal(false)} className="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg">Cancel</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                );
+            };
+
+            const LandingPage = () => (
+                <div className="min-h-screen bg-slate-950" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+                    <LanguageSelector />
+                    <div className="gradient-bg text-white py-20">
+                        <div className="max-w-7xl mx-auto px-4">
+                            <div className="text-center">
+                                <div className="flex justify-center mb-8"><Logo size="xlarge" /></div>
+                                <h1 className="text-5xl md:text-6xl font-bold mb-6">{t('heroTitle')}</h1>
+                                <p className="text-xl mb-12 text-slate-300 max-w-3xl mx-auto">{t('heroSubtitle')}</p>
+                                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                                    <button onClick={() => setCurrentView('register')} className="bg-white text-red-900 px-8 py-4 rounded-lg font-bold text-lg hover:bg-gray-100 transition">{t('registerCustomer')}</button>
+                                    <button onClick={() => setCurrentView('register-technician')} className="bg-red-800 text-white px-8 py-4 rounded-lg font-bold text-lg hover:bg-red-700 border-2 border-red-600 transition">{t('applyTechnician')}</button>
+                                    <button onClick={() => setCurrentView('login')} className="bg-slate-800 text-white px-8 py-4 rounded-lg font-bold text-lg hover:bg-slate-700 border-2 border-slate-600 transition">{t('signIn')}</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* What We Do Section */}
+                    <div className="bg-slate-900 py-20 border-t border-slate-800">
+                        <div className="max-w-7xl mx-auto px-4">
+                            <div className="text-center mb-16">
+                                <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">{t('whatWeDo')}</h2>
+                                <div className="w-24 h-1 bg-gradient-to-r from-red-700 to-red-900 mx-auto mb-8"></div>
+                                <p className="text-xl text-slate-300 max-w-4xl mx-auto leading-relaxed">
+                                    {t('missionText')}
+                                </p>
+                            </div>
+
+                            <div className="grid md:grid-cols-3 gap-8 mb-16">
+                                <div className="bg-slate-800 border border-slate-700 rounded-xl p-8 hover:border-red-700 transition card-hover">
+                                    <div className="text-4xl mb-4">🎯</div>
+                                    <h3 className="text-2xl font-bold text-white mb-4">{t('smartDispatch')}</h3>
+                                    <p className="text-slate-300 leading-relaxed">
+                                        {t('smartDispatchDesc')}
+                                    </p>
+                                </div>
+
+                                <div className="bg-slate-800 border border-slate-700 rounded-xl p-8 hover:border-red-700 transition card-hover">
+                                    <div className="text-4xl mb-4">👨‍💻</div>
+                                    <h3 className="text-2xl font-bold text-white mb-4">{t('certifiedPros')}</h3>
+                                    <p className="text-slate-300 leading-relaxed">
+                                        {t('certifiedProsDesc')}
+                                    </p>
+                                </div>
+
+                                <div className="bg-slate-800 border border-slate-700 rounded-xl p-8 hover:border-red-700 transition card-hover">
+                                    <div className="text-4xl mb-4">⚡</div>
+                                    <h3 className="text-2xl font-bold text-white mb-4">{t('availability247')}</h3>
+                                    <p className="text-slate-300 leading-relaxed">
+                                        {t('availability247Desc')}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="bg-gradient-to-r from-red-900/30 to-red-800/30 border border-red-700 rounded-2xl p-12">
+                                <div className="text-center">
+                                    <h3 className="text-3xl font-bold text-white mb-6">{t('whoWeServe')}</h3>
+                                    <p className="text-lg text-slate-200 max-w-3xl mx-auto leading-relaxed mb-8">
+                                        {t('whoWeServeDesc')}
+                                    </p>
+                                    <div className="grid md:grid-cols-4 gap-6 text-slate-300">
+                                        <div className="bg-slate-900/50 rounded-lg p-4">
+                                            <div className="text-2xl mb-2">🏥</div>
+                                            <p className="font-semibold">{t('healthcare')}</p>
+                                        </div>
+                                        <div className="bg-slate-900/50 rounded-lg p-4">
+                                            <div className="text-2xl mb-2">🏢</div>
+                                            <p className="font-semibold">{t('corporate')}</p>
+                                        </div>
+                                        <div className="bg-slate-900/50 rounded-lg p-4">
+                                            <div className="text-2xl mb-2">🏫</div>
+                                            <p className="font-semibold">{t('education')}</p>
+                                        </div>
+                                        <div className="bg-slate-900/50 rounded-lg p-4">
+                                            <div className="text-2xl mb-2">🏪</div>
+                                            <p className="font-semibold">{t('retail')}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mt-16 text-center">
+                                <h3 className="text-3xl font-bold text-white mb-6">{t('whyChoose')}</h3>
+                                <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto text-left">
+                                    <div className="flex gap-4">
+                                        <div className="text-red-500 text-2xl">✓</div>
+                                        <div>
+                                            <h4 className="text-xl font-semibold text-white mb-2">{t('realTimeTracking')}</h4>
+                                            <p className="text-slate-300">{t('realTimeTrackingDesc')}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-4">
+                                        <div className="text-red-500 text-2xl">✓</div>
+                                        <div>
+                                            <h4 className="text-xl font-semibold text-white mb-2">{t('qualityAssurance')}</h4>
+                                            <p className="text-slate-300">{t('qualityAssuranceDesc')}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-4">
+                                        <div className="text-red-500 text-2xl">✓</div>
+                                        <div>
+                                            <h4 className="text-xl font-semibold text-white mb-2">{t('rapidResponse')}</h4>
+                                            <p className="text-slate-300">{t('rapidResponseDesc')}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-4">
+                                        <div className="text-red-500 text-2xl">✓</div>
+                                        <div>
+                                            <h4 className="text-xl font-semibold text-white mb-2">{t('completeDoc')}</h4>
+                                            <p className="text-slate-300">{t('completeDocDesc')}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-slate-950 border-t border-slate-800 py-8">
+                        <div className="max-w-7xl mx-auto px-4 text-center">
+                            <div className="flex justify-center mb-4"><Logo size="medium" /></div>
+                            <p className="text-slate-400">{t('copyright')}</p>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            return (
+                <div>
+                    {currentView === 'landing' && <LandingPage />}
+                    {currentView === 'login' && <LoginPage />}
+                    {currentView === 'register' && <RegisterPage />}
+                    {currentView === 'register-technician' && <RegisterTechnicianPage />}
+                    {currentView === 'customer-dashboard' && <CustomerDashboard />}
+                    {currentView === 'customer-new-request' && <CustomerNewRequest />}
+                    {currentView === 'admin-dashboard' && <AdminDashboard />}
+                    {currentView === 'admin-technicians' && <AdminTechniciansPage />}
+                    {currentView === 'admin-customers' && <AdminCustomersPage />}
+                    {currentView === 'technician-dashboard' && <TechnicianDashboard />}
+                </div>
+            );
+        };
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
