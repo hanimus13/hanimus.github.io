@@ -4,6 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hanimus LLC - IT Tech Dispatch</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Professional IT technician dispatch and service request management for Sacramento area businesses. 24/7 certified IT support from Hanimus LLC.">
+    <meta name="keywords" content="IT support, technician dispatch, IT services, Sacramento IT, Citrus Heights, technical support">
+    <meta name="author" content="Hanimus LLC">
+    
+    <!-- Open Graph / Social Media -->
+    <meta property="og:title" content="Hanimus LLC - IT Tech Dispatch">
+    <meta property="og:description" content="Streamline your IT operations with intelligent technician dispatch and service request management">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://hanimus.com">
+    
+    <!-- Favicon (Data URL - no external file needed) -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='10' fill='%23DC2626'/><text x='50' y='65' font-size='50' fill='white' text-anchor='middle' font-family='Arial'>H</text></svg>">
+    
+    <!-- 
+        IMPORTANT: To use your custom logo:
+        1. Upload 'fulllogo.png' to your repository root directory
+        2. In the JavaScript below, change 'logoExists = false' to 'logoExists = true'
+        3. The site will automatically use your logo instead of the fallback
+    -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -24,7 +45,9 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
+        // Updated logo handling with fallback
         const logoPath = './fulllogo.png';
+        const logoExists = false; // Set to true once you upload fulllogo.png
 
         // Translations
         const translations = {
@@ -58,7 +81,7 @@
                 rapidResponseDesc: "Our priority-based system ensures urgent issues get immediate attention from available technicians.",
                 completeDoc: "Complete Documentation",
                 completeDocDesc: "Full audit trails, technician notes, and customer feedback for every service request.",
-                copyright: "© 2002-2025 Hanimus LLC. All rights reserved.",
+                copyright: "© 2002-2024 Hanimus LLC. All rights reserved.",
                 // Login
                 loginTitle: "Sign in to your account",
                 email: "Email",
@@ -122,7 +145,7 @@
                 rapidResponseDesc: "يضمن نظامنا القائم على الأولوية حصول المشكلات العاجلة على اهتمام فوري من الفنيين المتاحين.",
                 completeDoc: "توثيق كامل",
                 completeDocDesc: "مسارات تدقيق كاملة، وملاحظات الفني، وتعليقات العملاء لكل طلب خدمة.",
-                copyright: "© 2002-2025 Hanimus LLC. جميع الحقوق محفوظة.",
+                copyright: "© 2002-2024 Hanimus LLC. جميع الحقوق محفوظة.",
                 // Login
                 loginTitle: "تسجيل الدخول إلى حسابك",
                 email: "البريد الإلكتروني",
@@ -186,7 +209,7 @@
                 rapidResponseDesc: "Notre système basé sur les priorités garantit que les problèmes urgents reçoivent une attention immédiate des techniciens disponibles.",
                 completeDoc: "Documentation complète",
                 completeDocDesc: "Pistes d'audit complètes, notes de technicien et commentaires des clients pour chaque demande de service.",
-                copyright: "© 2002-2025 Hanimus LLC. Tous droits réservés.",
+                copyright: "© 2002-2024 Hanimus LLC. Tous droits réservés.",
                 // Login
                 loginTitle: "Connectez-vous à votre compte",
                 email: "Email",
@@ -350,8 +373,37 @@
             }, [requests, isDataLoaded]);
 
             const Logo = ({ size = "large" }) => {
-                const sizes = { small: "h-10 w-auto", medium: "h-16 w-auto", large: "h-32 w-auto", xlarge: "h-48 w-auto" };
-                return <div className="logo-container"><img src={logoPath} alt="Hanimus LLC" className={sizes[size]} /></div>;
+                const [imgError, setImgError] = useState(false);
+                const sizes = { 
+                    small: { h: "h-10", w: "40" }, 
+                    medium: { h: "h-16", w: "64" }, 
+                    large: { h: "h-32", w: "128" }, 
+                    xlarge: { h: "h-48", w: "192" } 
+                };
+                
+                // Fallback SVG logo if image fails to load
+                const FallbackLogo = () => (
+                    <svg width={sizes[size].w} height={sizes[size].w} viewBox="0 0 200 200" className={sizes[size].h}>
+                        <rect width="200" height="200" rx="20" fill="#DC2626"/>
+                        <text x="100" y="120" fontSize="80" fontWeight="bold" fill="white" textAnchor="middle" fontFamily="Inter, sans-serif">H</text>
+                        <text x="100" y="165" fontSize="24" fill="white" textAnchor="middle" fontFamily="Inter, sans-serif">HANIMUS</text>
+                    </svg>
+                );
+                
+                return (
+                    <div className="logo-container">
+                        {!imgError && logoExists ? (
+                            <img 
+                                src={logoPath} 
+                                alt="Hanimus LLC" 
+                                className={sizes[size].h + " w-auto"} 
+                                onError={() => setImgError(true)}
+                            />
+                        ) : (
+                            <FallbackLogo />
+                        )}
+                    </div>
+                );
             };
 
             const LanguageSelector = () => {
@@ -1634,16 +1686,27 @@
 
             return (
                 <div>
-                    {currentView === 'landing' && <LandingPage />}
-                    {currentView === 'login' && <LoginPage />}
-                    {currentView === 'register' && <RegisterPage />}
-                    {currentView === 'register-technician' && <RegisterTechnicianPage />}
-                    {currentView === 'customer-dashboard' && <CustomerDashboard />}
-                    {currentView === 'customer-new-request' && <CustomerNewRequest />}
-                    {currentView === 'admin-dashboard' && <AdminDashboard />}
-                    {currentView === 'admin-technicians' && <AdminTechniciansPage />}
-                    {currentView === 'admin-customers' && <AdminCustomersPage />}
-                    {currentView === 'technician-dashboard' && <TechnicianDashboard />}
+                    {!isDataLoaded ? (
+                        <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+                            <div className="text-center">
+                                <div className="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-red-600 mb-4"></div>
+                                <p className="text-slate-300 text-lg">Loading Hanimus Tech Dispatch...</p>
+                            </div>
+                        </div>
+                    ) : (
+                        <>
+                            {currentView === 'landing' && <LandingPage />}
+                            {currentView === 'login' && <LoginPage />}
+                            {currentView === 'register' && <RegisterPage />}
+                            {currentView === 'register-technician' && <RegisterTechnicianPage />}
+                            {currentView === 'customer-dashboard' && <CustomerDashboard />}
+                            {currentView === 'customer-new-request' && <CustomerNewRequest />}
+                            {currentView === 'admin-dashboard' && <AdminDashboard />}
+                            {currentView === 'admin-technicians' && <AdminTechniciansPage />}
+                            {currentView === 'admin-customers' && <AdminCustomersPage />}
+                            {currentView === 'technician-dashboard' && <TechnicianDashboard />}
+                        </>
+                    )}
                 </div>
             );
         };
