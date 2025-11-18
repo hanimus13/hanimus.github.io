@@ -1,0 +1,1812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hanimus LLC - IT Tech Dispatch</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Professional IT technician dispatch and service request management for Sacramento area businesses. 24/7 certified IT support from Hanimus LLC.">
+    <meta name="keywords" content="IT support, technician dispatch, IT services, Sacramento IT, Citrus Heights, technical support">
+    <meta name="author" content="Hanimus LLC">
+    
+    <!-- Open Graph / Social Media -->
+    <meta property="og:title" content="Hanimus LLC - IT Tech Dispatch">
+    <meta property="og:description" content="Streamline your IT operations with intelligent technician dispatch and service request management">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://hanimus.com">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='10' fill='%23DC2626'/><text x='50' y='65' font-size='50' fill='white' text-anchor='middle' font-family='Arial'>H</text></svg>">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; }
+        .gradient-bg { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(185, 28, 28, 0.4); }
+        .logo-container { background: white; padding: 1.5rem; border-radius: 1rem; display: inline-block; }
+        [dir="rtl"] { text-align: right; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // ============================================
+        // FIREBASE CONFIGURATION
+        // ============================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyAnCHNfoslDSbrvqlQsLFcicjmo4G0ECVc",
+            authDomain: "hanimus-dispatch.firebaseapp.com",
+            databaseURL: "https://hanimus-dispatch-default-rtdb.firebaseio.com",
+            projectId: "hanimus-dispatch",
+            storageBucket: "hanimus-dispatch.firebasestorage.app",
+            messagingSenderId: "779431998540",
+            appId: "1:779431998540:web:1948b2777c77a5880930e9",
+            measurementId: "G-K17S14ZD1P"
+        };
+
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const database = firebase.database();
+        const auth = firebase.auth();
+
+        // ============================================
+        // DATABASE HELPER FUNCTIONS
+        // ============================================
+        const DB = {
+            // Customers
+            async getCustomers() {
+                const snapshot = await database.ref('customers').once('value');
+                return snapshot.val() || {};
+            },
+            async getCustomer(id) {
+                const snapshot = await database.ref(`customers/${id}`).once('value');
+                return snapshot.val();
+            },
+            async saveCustomer(id, data) {
+                await database.ref(`customers/${id}`).set(data);
+            },
+            async deleteCustomer(id) {
+                await database.ref(`customers/${id}`).remove();
+            },
+            
+            // Technicians
+            async getTechnicians() {
+                const snapshot = await database.ref('technicians').once('value');
+                return snapshot.val() || {};
+            },
+            async getTechnician(id) {
+                const snapshot = await database.ref(`technicians/${id}`).once('value');
+                return snapshot.val();
+            },
+            async saveTechnician(id, data) {
+                await database.ref(`technicians/${id}`).set(data);
+            },
+            async deleteTechnician(id) {
+                await database.ref(`technicians/${id}`).remove();
+            },
+            
+            // Service Requests
+            async getRequests() {
+                const snapshot = await database.ref('requests').once('value');
+                return snapshot.val() || {};
+            },
+            async getRequest(id) {
+                const snapshot = await database.ref(`requests/${id}`).once('value');
+                return snapshot.val();
+            },
+            async saveRequest(id, data) {
+                await database.ref(`requests/${id}`).set(data);
+            },
+            async deleteRequest(id) {
+                await database.ref(`requests/${id}`).remove();
+            },
+            
+            // Admin
+            async getAdmins() {
+                const snapshot = await database.ref('admins').once('value');
+                return snapshot.val() || {};
+            },
+            async saveAdmin(id, data) {
+                await database.ref(`admins/${id}`).set(data);
+            },
+            
+            // Real-time listeners
+            onCustomersChange(callback) {
+                return database.ref('customers').on('value', snapshot => {
+                    callback(snapshot.val() || {});
+                });
+            },
+            onTechniciansChange(callback) {
+                return database.ref('technicians').on('value', snapshot => {
+                    callback(snapshot.val() || {});
+                });
+            },
+            onRequestsChange(callback) {
+                return database.ref('requests').on('value', snapshot => {
+                    callback(snapshot.val() || {});
+                });
+            },
+            
+            // Unsubscribe from listeners
+            offCustomersChange() {
+                database.ref('customers').off('value');
+            },
+            offTechniciansChange() {
+                database.ref('technicians').off('value');
+            },
+            offRequestsChange() {
+                database.ref('requests').off('value');
+            }
+        };
+
+        const { useState, useEffect } = React;
+
+        const logoPath = './fulllogo.png';
+        const logoExists = false;
+
+        // Translations (keeping the same structure as original)
+        const translations = {
+            en: {
+                heroTitle: "IT Tech Dispatch",
+                heroSubtitle: "Streamline your IT operations with intelligent technician dispatch and service request management",
+                registerCustomer: "Register as Customer",
+                applyTechnician: "Apply as Technician",
+                signIn: "Sign In",
+                whatWeDo: "What We Do",
+                missionText: "At Hanimus LLC, we don't just manage IT requests—we revolutionize them. Headquartered in Citrus Heights and serving the greater Sacramento area, our mission is clear: to connect businesses with certified IT professionals through a seamless, intelligent dispatch platform that eliminates downtime and maximizes efficiency.",
+                smartDispatch: "Smart Dispatch System",
+                smartDispatchDesc: "Our intelligent platform matches your IT needs with the right certified technician—instantly. From network issues to hardware failures, from security concerns to software troubleshooting, we ensure the perfect match every time.",
+                certifiedPros: "Certified Professionals",
+                certifiedProsDesc: "We don't just hire technicians—we cultivate excellence. Every professional on our platform undergoes rigorous vetting, bringing certifications, real-world experience, and a commitment to solving your IT challenges with precision.",
+                availability247: "24/7 Availability",
+                availability247Desc: "Technology issues don't wait for business hours—neither do we. Our platform operates around the clock, ensuring you can submit requests, track progress, and connect with technicians whenever urgent needs arise.",
+                whoWeServe: "Who We Serve",
+                whoWeServeDesc: "From small businesses to enterprise organizations, from healthcare facilities to educational institutions, from retail operations to professional services—we provide tailored IT support solutions that scale with your needs.",
+                healthcare: "Healthcare",
+                corporate: "Corporate",
+                education: "Education",
+                retail: "Retail",
+                whyChoose: "Why Choose Hanimus LLC?",
+                realTimeTracking: "Real-Time Tracking",
+                realTimeTrackingDesc: "Monitor every step of your service request from submission to completion with full transparency.",
+                qualityAssurance: "Quality Assurance",
+                qualityAssuranceDesc: "Every job requires technician completion notes and customer review, ensuring accountability and excellence.",
+                rapidResponse: "Rapid Response",
+                rapidResponseDesc: "Our priority-based system ensures urgent issues get immediate attention from available technicians.",
+                completeDoc: "Complete Documentation",
+                completeDocDesc: "Full audit trails, technician notes, and customer feedback for every service request.",
+                copyright: "© 2002-2024 Hanimus LLC. All rights reserved.",
+                loginTitle: "Sign in to your account",
+                email: "Email",
+                password: "Password",
+                confirmPassword: "Confirm Password",
+                login: "Sign In",
+                registerAsCustomer: "Register as Customer →",
+                applyAsTechnician: "Apply as Technician →",
+                back: "← Back",
+                demoAccounts: "Demo Accounts:",
+                logout: "Logout",
+                cancel: "Cancel",
+                submit: "Submit",
+                name: "Name",
+                phone: "Phone",
+                address: "Address",
+                requests: "Requests",
+                technicians: "Technicians",
+                customers: "Customers",
+                myRequests: "My Requests",
+                newRequest: "New Request",
+                myJobs: "My Jobs",
+                total: "Total",
+                pending: "Pending",
+                active: "Active",
+                inProgress: "In Progress",
+                completed: "Completed",
+                review: "Review",
+                readyToReview: "Ready to Review",
+                awaitingReview: "Awaiting Review",
+            },
+            ar: {
+                heroTitle: "نظام إرسال تقنية المعلومات",
+                heroSubtitle: "قم بتبسيط عمليات تقنية المعلومات الخاصة بك من خلال نظام ذكي لإرسال الفنيين وإدارة طلبات الخدمة",
+                registerCustomer: "التسجيل كعميل",
+                applyTechnician: "التقديم كفني",
+                signIn: "تسجيل الدخول",
+                whatWeDo: "ما نقوم به",
+                missionText: "في شركة Hanimus LLC، نحن لا ندير طلبات تقنية المعلومات فحسب - بل نحدث ثورة فيها.",
+                smartDispatch: "نظام الإرسال الذكي",
+                smartDispatchDesc: "تقوم منصتنا الذكية بمطابقة احتياجاتك في تقنية المعلومات مع الفني المعتمد المناسب.",
+                certifiedPros: "محترفون معتمدون",
+                certifiedProsDesc: "نحن لا نوظف فنيين فقط - بل نزرع التميز.",
+                availability247: "توفر على مدار الساعة طوال أيام الأسبوع",
+                availability247Desc: "مشاكل التكنولوجيا لا تنتظر ساعات العمل - نحن كذلك.",
+                whoWeServe: "من نخدم",
+                whoWeServeDesc: "من الشركات الصغيرة إلى المؤسسات الكبيرة، نقدم حلول دعم تقنية المعلومات المخصصة.",
+                healthcare: "الرعاية الصحية",
+                corporate: "الشركات",
+                education: "التعليم",
+                retail: "التجزئة",
+                whyChoose: "لماذا تختار Hanimus LLC؟",
+                realTimeTracking: "التتبع في الوقت الفعلي",
+                realTimeTrackingDesc: "راقب كل خطوة من طلب الخدمة الخاص بك.",
+                qualityAssurance: "ضمان الجودة",
+                qualityAssuranceDesc: "كل وظيفة تتطلب ملاحظات إكمال الفني ومراجعة العميل.",
+                rapidResponse: "استجابة سريعة",
+                rapidResponseDesc: "نظامنا القائم على الأولوية يضمن اهتماما فوريا بالمشكلات العاجلة.",
+                completeDoc: "توثيق كامل",
+                completeDocDesc: "سجلات تدقيق كاملة وملاحظات الفني وتعليقات العملاء.",
+                copyright: "© 2002-2024 Hanimus LLC. جميع الحقوق محفوظة.",
+                loginTitle: "تسجيل الدخول إلى حسابك",
+                email: "البريد الإلكتروني",
+                password: "كلمة المرور",
+                confirmPassword: "تأكيد كلمة المرور",
+                login: "تسجيل الدخول",
+                registerAsCustomer: "← التسجيل كعميل",
+                applyAsTechnician: "← التقديم كفني",
+                back: "العودة ←",
+                demoAccounts: "حسابات تجريبية:",
+                logout: "تسجيل الخروج",
+                cancel: "إلغاء",
+                submit: "إرسال",
+                name: "الاسم",
+                phone: "الهاتف",
+                address: "العنوان",
+                requests: "الطلبات",
+                technicians: "الفنيون",
+                customers: "العملاء",
+                myRequests: "طلباتي",
+                newRequest: "طلب جديد",
+                myJobs: "وظائفي",
+                total: "المجموع",
+                pending: "قيد الانتظار",
+                active: "نشط",
+                inProgress: "قيد التنفيذ",
+                completed: "مكتمل",
+                review: "مراجعة",
+                readyToReview: "جاهز للمراجعة",
+                awaitingReview: "في انتظار المراجعة",
+            }
+        };
+
+        const App = () => {
+            const [currentView, setCurrentView] = useState('landing');
+            const [currentUser, setCurrentUser] = useState(null);
+            const [language, setLanguage] = useState('en');
+            const [loading, setLoading] = useState(true);
+            
+            // Real-time data states
+            const [customers, setCustomers] = useState({});
+            const [technicians, setTechnicians] = useState({});
+            const [requests, setRequests] = useState({});
+
+            const t = (key) => translations[language][key] || key;
+
+            // Initialize app and load data
+            useEffect(() => {
+                const initApp = async () => {
+                    try {
+                        console.log('🔥 Starting Firebase initialization...');
+                        console.log('📡 Database URL:', firebaseConfig.databaseURL);
+                        
+                        // Test Firebase connection
+                        console.log('🔍 Testing Firebase connection...');
+                        await database.ref('.info/connected').once('value');
+                        console.log('✅ Firebase connected successfully!');
+                        
+                        // Load initial data
+                        console.log('📥 Loading data from Firebase...');
+                        const [customersData, techniciansData, requestsData] = await Promise.all([
+                            DB.getCustomers(),
+                            DB.getTechnicians(),
+                            DB.getRequests()
+                        ]);
+                        
+                        console.log('✅ Customers loaded:', Object.keys(customersData).length);
+                        console.log('✅ Technicians loaded:', Object.keys(techniciansData).length);
+                        console.log('✅ Requests loaded:', Object.keys(requestsData).length);
+                        
+                        setCustomers(customersData);
+                        setTechnicians(techniciansData);
+                        setRequests(requestsData);
+
+                        // Set up real-time listeners
+                        console.log('👂 Setting up real-time listeners...');
+                        DB.onCustomersChange(setCustomers);
+                        DB.onTechniciansChange(setTechnicians);
+                        DB.onRequestsChange(setRequests);
+                        console.log('✅ Listeners active!');
+
+                        // Check for saved session (using localStorage for session only)
+                        const savedUser = localStorage.getItem('currentUser');
+                        if (savedUser) {
+                            console.log('👤 Found saved session');
+                            const user = JSON.parse(savedUser);
+                            setCurrentUser(user);
+                            
+                            if (user.role === 'customer') setCurrentView('customer-dashboard');
+                            else if (user.role === 'technician') setCurrentView('technician-dashboard');
+                            else if (user.role === 'admin') setCurrentView('admin-dashboard');
+                        } else {
+                            console.log('👤 No saved session found');
+                        }
+                        
+                        console.log('🎉 Initialization complete!');
+                    } catch (error) {
+                        console.error('❌ ERROR during initialization:', error);
+                        console.error('Error details:', {
+                            message: error.message,
+                            code: error.code,
+                            stack: error.stack
+                        });
+                        
+                        // Show user-friendly error
+                        let errorMessage = 'Error connecting to database.\n\n';
+                        
+                        if (error.code === 'PERMISSION_DENIED') {
+                            errorMessage += '🔒 PERMISSION DENIED\n\nYour database rules are blocking access.\n\n';
+                            errorMessage += 'FIX: Go to Firebase Console → Database → Rules\n';
+                            errorMessage += 'Set to: { "rules": { ".read": true, ".write": true } }';
+                        } else if (error.message.includes('network')) {
+                            errorMessage += '🌐 NETWORK ERROR\n\nCannot connect to Firebase.\n\n';
+                            errorMessage += 'Check your internet connection.';
+                        } else if (error.message.includes('not found')) {
+                            errorMessage += '📦 DATABASE NOT FOUND\n\nYou need to create the Realtime Database.\n\n';
+                            errorMessage += 'FIX: Firebase Console → Create Database → Test Mode';
+                        } else {
+                            errorMessage += 'Details: ' + error.message + '\n\n';
+                            errorMessage += 'Check the browser console (F12) for more information.';
+                        }
+                        
+                        alert(errorMessage);
+                    } finally {
+                        console.log('⏱️ Setting loading to false');
+                        setLoading(false);
+                    }
+                };
+
+                initApp();
+
+                // Cleanup listeners on unmount
+                return () => {
+                    console.log('🧹 Cleaning up listeners...');
+                    DB.offCustomersChange();
+                    DB.offTechniciansChange();
+                    DB.offRequestsChange();
+                };
+            }, []);
+
+            const handleLogin = async (email, password) => {
+                try {
+                    // Check admin
+                    const admins = await DB.getAdmins();
+                    const admin = Object.entries(admins).find(([id, a]) => 
+                        a.email === email && a.password === password
+                    );
+                    if (admin) {
+                        const user = { ...admin[1], id: admin[0], role: 'admin' };
+                        setCurrentUser(user);
+                        localStorage.setItem('currentUser', JSON.stringify(user));
+                        setCurrentView('admin-dashboard');
+                        return true;
+                    }
+
+                    // Check customers
+                    const customer = Object.entries(customers).find(([id, c]) => 
+                        c.email === email && c.password === password
+                    );
+                    if (customer) {
+                        const user = { ...customer[1], id: customer[0], role: 'customer' };
+                        setCurrentUser(user);
+                        localStorage.setItem('currentUser', JSON.stringify(user));
+                        setCurrentView('customer-dashboard');
+                        return true;
+                    }
+
+                    // Check technicians
+                    const tech = Object.entries(technicians).find(([id, t]) => 
+                        t.email === email && t.password === password
+                    );
+                    if (tech) {
+                        const user = { ...tech[1], id: tech[0], role: 'technician' };
+                        setCurrentUser(user);
+                        localStorage.setItem('currentUser', JSON.stringify(user));
+                        setCurrentView('technician-dashboard');
+                        return true;
+                    }
+
+                    alert('Invalid credentials');
+                    return false;
+                } catch (error) {
+                    console.error('Login error:', error);
+                    alert('Error during login');
+                    return false;
+                }
+            };
+
+            const handleRegisterCustomer = async (data) => {
+                try {
+                    // Check if email already exists
+                    const existingCustomer = Object.values(customers).find(c => c.email === data.email);
+                    if (existingCustomer) {
+                        alert('Email already registered');
+                        return false;
+                    }
+
+                    const id = 'cust_' + Date.now();
+                    const customerData = {
+                        ...data,
+                        createdAt: new Date().toISOString()
+                    };
+                    
+                    await DB.saveCustomer(id, customerData);
+                    alert('Registration successful! Please login.');
+                    setCurrentView('login');
+                    return true;
+                } catch (error) {
+                    console.error('Registration error:', error);
+                    alert('Error during registration');
+                    return false;
+                }
+            };
+
+            const handleRegisterTechnician = async (data) => {
+                try {
+                    const existingTech = Object.values(technicians).find(t => t.email === data.email);
+                    if (existingTech) {
+                        alert('Email already registered');
+                        return false;
+                    }
+
+                    const id = 'tech_' + Date.now();
+                    const techData = {
+                        ...data,
+                        status: 'pending',
+                        createdAt: new Date().toISOString()
+                    };
+                    
+                    await DB.saveTechnician(id, techData);
+                    alert('Application submitted! Admin will review your application.');
+                    setCurrentView('login');
+                    return true;
+                } catch (error) {
+                    console.error('Technician registration error:', error);
+                    alert('Error submitting application');
+                    return false;
+                }
+            };
+
+            const handleLogout = () => {
+                setCurrentUser(null);
+                localStorage.removeItem('currentUser');
+                setCurrentView('landing');
+            };
+
+            const handleSubmitRequest = async (requestData) => {
+                try {
+                    const id = 'req_' + Date.now();
+                    const request = {
+                        ...requestData,
+                        customerId: currentUser.id,
+                        customerName: currentUser.name,
+                        status: 'pending',
+                        createdAt: new Date().toISOString()
+                    };
+                    
+                    await DB.saveRequest(id, request);
+                    alert('Request submitted successfully!');
+                    setCurrentView('customer-dashboard');
+                    return true;
+                } catch (error) {
+                    console.error('Error submitting request:', error);
+                    alert('Error submitting request');
+                    return false;
+                }
+            };
+
+            if (loading) {
+                return (
+                    <div className="min-h-screen flex items-center justify-center bg-slate-950">
+                        <div className="text-center max-w-2xl px-4">
+                            <div className="text-6xl mb-6 animate-spin">⚙️</div>
+                            <p className="text-2xl text-white mb-4">Connecting to Firebase...</p>
+                            <p className="text-slate-400 mb-6">If this takes more than 5 seconds, there's a problem.</p>
+                            <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 text-left">
+                                <p className="text-white font-bold mb-2">🔍 Debugging Steps:</p>
+                                <ol className="text-slate-300 space-y-2 text-sm">
+                                    <li>1. Press <kbd className="bg-slate-900 px-2 py-1 rounded">F12</kbd> to open Developer Console</li>
+                                    <li>2. Click the "Console" tab</li>
+                                    <li>3. Look for RED error messages</li>
+                                    <li>4. Check TROUBLESHOOTING.md for solutions</li>
+                                </ol>
+                            </div>
+                            <div className="mt-6 bg-yellow-900/30 border border-yellow-600 rounded-xl p-4">
+                                <p className="text-yellow-500 font-semibold mb-2">⚠️ Most Common Issue:</p>
+                                <p className="text-yellow-300 text-sm">Database rules not set to TEST MODE</p>
+                                <p className="text-yellow-400 text-xs mt-2">
+                                    Fix: Firebase Console → Database → Rules → Set to test mode
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            // Logo Component
+            const Logo = ({ size = 'large' }) => (
+                <div className={`flex items-center gap-3 ${size === 'large' ? 'text-3xl' : 'text-xl'}`}>
+                    {logoExists ? (
+                        <img src={logoPath} alt="Hanimus LLC" className={size === 'large' ? 'h-16' : 'h-10'} />
+                    ) : (
+                        <>
+                            <div className={`${size === 'large' ? 'w-14 h-14' : 'w-8 h-8'} bg-red-700 rounded-lg flex items-center justify-center font-black text-white`}>
+                                H
+                            </div>
+                            <span className="font-black text-white">HANIMUS</span>
+                        </>
+                    )}
+                </div>
+            );
+
+            // Stats Card Component
+            const StatsCard = ({ title, value, icon, color = 'blue' }) => (
+                <div className={`bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-6 border border-slate-700 hover:border-${color}-500 transition card-hover`}>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-slate-400 text-sm mb-1">{title}</p>
+                            <p className="text-3xl font-bold text-white">{value}</p>
+                        </div>
+                        <div className={`text-4xl opacity-50`}>{icon}</div>
+                    </div>
+                </div>
+            );
+
+            // Request Card Component
+            const RequestCard = ({ request, onAction, showCustomer = false, showTechnician = false }) => {
+                const statusColors = {
+                    pending: 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30',
+                    active: 'bg-blue-500/20 text-blue-500 border-blue-500/30',
+                    'in-progress': 'bg-purple-500/20 text-purple-500 border-purple-500/30',
+                    completed: 'bg-green-500/20 text-green-500 border-green-500/30',
+                    reviewed: 'bg-slate-500/20 text-slate-500 border-slate-500/30'
+                };
+
+                const priorityColors = {
+                    low: 'text-green-400',
+                    medium: 'text-yellow-400',
+                    high: 'text-orange-400',
+                    critical: 'text-red-400'
+                };
+
+                return (
+                    <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 hover:border-red-700 transition card-hover">
+                        <div className="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 className="text-xl font-bold text-white mb-2">{request.title}</h3>
+                                <p className="text-slate-400">{request.description}</p>
+                            </div>
+                            <div className="flex gap-2 items-center">
+                                <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${statusColors[request.status]}`}>
+                                    {request.status}
+                                </span>
+                                <span className={`text-2xl ${priorityColors[request.priority]}`}>
+                                    {request.priority === 'critical' ? '🔴' : request.priority === 'high' ? '🟠' : request.priority === 'medium' ? '🟡' : '🟢'}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+                            {showCustomer && request.customerName && (
+                                <div>
+                                    <p className="text-slate-500">Customer</p>
+                                    <p className="text-white font-semibold">{request.customerName}</p>
+                                </div>
+                            )}
+                            {showTechnician && request.technicianName && (
+                                <div>
+                                    <p className="text-slate-500">Technician</p>
+                                    <p className="text-white font-semibold">{request.technicianName}</p>
+                                </div>
+                            )}
+                            <div>
+                                <p className="text-slate-500">Created</p>
+                                <p className="text-white">{new Date(request.createdAt).toLocaleDateString()}</p>
+                            </div>
+                            <div>
+                                <p className="text-slate-500">Priority</p>
+                                <p className="text-white capitalize">{request.priority}</p>
+                            </div>
+                        </div>
+
+                        {onAction && (
+                            <div className="flex gap-2 mt-4">
+                                {onAction}
+                            </div>
+                        )}
+                    </div>
+                );
+            };
+
+            // Landing Page
+            const LandingPage = () => (
+                <div>
+                    <div className="gradient-bg min-h-screen">
+                        <nav className="border-b border-slate-800 bg-slate-950/50 backdrop-blur-sm sticky top-0 z-50">
+                            <div className="max-w-7xl mx-auto px-4 py-4">
+                                <div className="flex justify-between items-center">
+                                    <Logo />
+                                    <div className="flex items-center gap-4">
+                                        <button
+                                            onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
+                                            className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition text-white"
+                                        >
+                                            {language === 'en' ? 'العربية' : 'English'}
+                                        </button>
+                                        <button
+                                            onClick={() => setCurrentView('login')}
+                                            className="px-6 py-2 rounded-lg bg-red-700 hover:bg-red-600 transition font-semibold text-white"
+                                        >
+                                            {t('signIn')}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </nav>
+
+                        <div className="max-w-7xl mx-auto px-4 py-20" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+                            <div className="text-center mb-20">
+                                <h1 className="text-6xl md:text-7xl font-black text-white mb-6 leading-tight">
+                                    {t('heroTitle')}
+                                </h1>
+                                <p className="text-xl md:text-2xl text-slate-300 mb-12 max-w-4xl mx-auto leading-relaxed">
+                                    {t('heroSubtitle')}
+                                </p>
+                                <div className="flex flex-wrap justify-center gap-4">
+                                    <button
+                                        onClick={() => setCurrentView('register')}
+                                        className="px-8 py-4 bg-red-700 hover:bg-red-600 text-white rounded-xl font-bold text-lg transition transform hover:scale-105"
+                                    >
+                                        {t('registerCustomer')}
+                                    </button>
+                                    <button
+                                        onClick={() => setCurrentView('register-technician')}
+                                        className="px-8 py-4 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-lg border-2 border-red-700 transition transform hover:scale-105"
+                                    >
+                                        {t('applyTechnician')}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="bg-slate-900/50 rounded-2xl p-12 border border-slate-800 mb-16">
+                                <h2 className="text-4xl font-bold text-white mb-8 text-center">{t('whatWeDo')}</h2>
+                                <p className="text-lg text-slate-300 leading-relaxed text-center max-w-4xl mx-auto">
+                                    {t('missionText')}
+                                </p>
+                            </div>
+
+                            <div className="grid md:grid-cols-3 gap-8 mb-16">
+                                <div className="bg-slate-800 border border-slate-700 rounded-xl p-8 hover:border-red-700 transition card-hover">
+                                    <div className="text-4xl mb-4">🎯</div>
+                                    <h3 className="text-2xl font-bold text-white mb-4">{t('smartDispatch')}</h3>
+                                    <p className="text-slate-300 leading-relaxed">{t('smartDispatchDesc')}</p>
+                                </div>
+
+                                <div className="bg-slate-800 border border-slate-700 rounded-xl p-8 hover:border-red-700 transition card-hover">
+                                    <div className="text-4xl mb-4">👨‍💻</div>
+                                    <h3 className="text-2xl font-bold text-white mb-4">{t('certifiedPros')}</h3>
+                                    <p className="text-slate-300 leading-relaxed">{t('certifiedProsDesc')}</p>
+                                </div>
+
+                                <div className="bg-slate-800 border border-slate-700 rounded-xl p-8 hover:border-red-700 transition card-hover">
+                                    <div className="text-4xl mb-4">⚡</div>
+                                    <h3 className="text-2xl font-bold text-white mb-4">{t('availability247')}</h3>
+                                    <p className="text-slate-300 leading-relaxed">{t('availability247Desc')}</p>
+                                </div>
+                            </div>
+
+                            <div className="bg-gradient-to-r from-red-900/30 to-red-800/30 border border-red-700 rounded-2xl p-12">
+                                <div className="text-center">
+                                    <h3 className="text-3xl font-bold text-white mb-6">{t('whoWeServe')}</h3>
+                                    <p className="text-lg text-slate-200 max-w-3xl mx-auto leading-relaxed mb-8">
+                                        {t('whoWeServeDesc')}
+                                    </p>
+                                    <div className="grid md:grid-cols-4 gap-6 text-slate-300">
+                                        <div className="bg-slate-900/50 rounded-lg p-4">
+                                            <div className="text-2xl mb-2">🏥</div>
+                                            <p className="font-semibold">{t('healthcare')}</p>
+                                        </div>
+                                        <div className="bg-slate-900/50 rounded-lg p-4">
+                                            <div className="text-2xl mb-2">🏢</div>
+                                            <p className="font-semibold">{t('corporate')}</p>
+                                        </div>
+                                        <div className="bg-slate-900/50 rounded-lg p-4">
+                                            <div className="text-2xl mb-2">🏫</div>
+                                            <p className="font-semibold">{t('education')}</p>
+                                        </div>
+                                        <div className="bg-slate-900/50 rounded-lg p-4">
+                                            <div className="text-2xl mb-2">🏪</div>
+                                            <p className="font-semibold">{t('retail')}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mt-16 text-center">
+                                <h3 className="text-3xl font-bold text-white mb-6">{t('whyChoose')}</h3>
+                                <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto text-left">
+                                    <div className="flex gap-4">
+                                        <div className="text-red-500 text-2xl">✓</div>
+                                        <div>
+                                            <h4 className="text-xl font-semibold text-white mb-2">{t('realTimeTracking')}</h4>
+                                            <p className="text-slate-300">{t('realTimeTrackingDesc')}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-4">
+                                        <div className="text-red-500 text-2xl">✓</div>
+                                        <div>
+                                            <h4 className="text-xl font-semibold text-white mb-2">{t('qualityAssurance')}</h4>
+                                            <p className="text-slate-300">{t('qualityAssuranceDesc')}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-4">
+                                        <div className="text-red-500 text-2xl">✓</div>
+                                        <div>
+                                            <h4 className="text-xl font-semibold text-white mb-2">{t('rapidResponse')}</h4>
+                                            <p className="text-slate-300">{t('rapidResponseDesc')}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-4">
+                                        <div className="text-red-500 text-2xl">✓</div>
+                                        <div>
+                                            <h4 className="text-xl font-semibold text-white mb-2">{t('completeDoc')}</h4>
+                                            <p className="text-slate-300">{t('completeDocDesc')}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-slate-950 border-t border-slate-800 py-8">
+                        <div className="max-w-7xl mx-auto px-4 text-center">
+                            <div className="flex justify-center mb-4"><Logo size="medium" /></div>
+                            <p className="text-slate-400">{t('copyright')}</p>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            // Login Page
+            const LoginPage = () => {
+                const [email, setEmail] = useState('');
+                const [password, setPassword] = useState('');
+
+                const handleSubmit = async (e) => {
+                    e.preventDefault();
+                    await handleLogin(email, password);
+                };
+
+                return (
+                    <div className="min-h-screen flex items-center justify-center p-4">
+                        <div className="max-w-md w-full">
+                            <div className="text-center mb-8">
+                                <Logo />
+                                <h2 className="text-3xl font-bold text-white mt-6">{t('loginTitle')}</h2>
+                            </div>
+
+                            <div className="bg-slate-800 border border-slate-700 rounded-xl p-8">
+                                <form onSubmit={handleSubmit} className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                                            {t('email')}
+                                        </label>
+                                        <input
+                                            type="email"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:border-red-700 focus:outline-none"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                                            {t('password')}
+                                        </label>
+                                        <input
+                                            type="password"
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:border-red-700 focus:outline-none"
+                                            required
+                                        />
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        className="w-full py-3 bg-red-700 hover:bg-red-600 text-white rounded-lg font-semibold transition"
+                                    >
+                                        {t('login')}
+                                    </button>
+                                </form>
+
+                                <div className="mt-6 text-center space-y-2">
+                                    <button
+                                        onClick={() => setCurrentView('register')}
+                                        className="text-red-500 hover:text-red-400 transition"
+                                    >
+                                        {t('registerAsCustomer')}
+                                    </button>
+                                    <br />
+                                    <button
+                                        onClick={() => setCurrentView('register-technician')}
+                                        className="text-red-500 hover:text-red-400 transition"
+                                    >
+                                        {t('applyAsTechnician')}
+                                    </button>
+                                </div>
+
+                                <button
+                                    onClick={() => setCurrentView('landing')}
+                                    className="mt-6 text-slate-400 hover:text-white transition"
+                                >
+                                    {t('back')}
+                                </button>
+
+                                <div className="mt-6 pt-6 border-t border-slate-700">
+                                    <p className="text-sm text-slate-400 mb-2">{t('demoAccounts')}</p>
+                                    <div className="space-y-1 text-xs text-slate-500">
+                                        <p>Admin: admin@hanimus.com / admin123</p>
+                                        <p>Customer: customer@test.com / pass123</p>
+                                        <p>Tech: tech@test.com / pass123</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            // Register Customer Page
+            const RegisterPage = () => {
+                const [formData, setFormData] = useState({
+                    name: '',
+                    email: '',
+                    password: '',
+                    confirmPassword: '',
+                    company: '',
+                    phone: '',
+                    address: ''
+                });
+
+                const handleSubmit = async (e) => {
+                    e.preventDefault();
+                    if (formData.password !== formData.confirmPassword) {
+                        alert('Passwords do not match');
+                        return;
+                    }
+                    const { confirmPassword, ...data } = formData;
+                    await handleRegisterCustomer(data);
+                };
+
+                return (
+                    <div className="min-h-screen flex items-center justify-center p-4">
+                        <div className="max-w-md w-full">
+                            <div className="text-center mb-8">
+                                <Logo />
+                                <h2 className="text-3xl font-bold text-white mt-6">{t('registerCustomer')}</h2>
+                            </div>
+
+                            <div className="bg-slate-800 border border-slate-700 rounded-xl p-8">
+                                <form onSubmit={handleSubmit} className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                                            {t('name')}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={formData.name}
+                                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                            className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:border-red-700 focus:outline-none"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                                            Company
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={formData.company}
+                                            onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                                            className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:border-red-700 focus:outline-none"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                                            {t('email')}
+                                        </label>
+                                        <input
+                                            type="email"
+                                            value={formData.email}
+                                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                            className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:border-red-700 focus:outline-none"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                                            {t('phone')}
+                                        </label>
+                                        <input
+                                            type="tel"
+                                            value={formData.phone}
+                                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                            className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:border-red-700 focus:outline-none"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                                            {t('address')}
+                                        </label>
+                                        <textarea
+                                            value={formData.address}
+                                            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                            className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:border-red-700 focus:outline-none"
+                                            rows="2"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                                            {t('password')}
+                                        </label>
+                                        <input
+                                            type="password"
+                                            value={formData.password}
+                                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                            className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:border-red-700 focus:outline-none"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                                            {t('confirmPassword')}
+                                        </label>
+                                        <input
+                                            type="password"
+                                            value={formData.confirmPassword}
+                                            onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                                            className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:border-red-700 focus:outline-none"
+                                            required
+                                        />
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        className="w-full py-3 bg-red-700 hover:bg-red-600 text-white rounded-lg font-semibold transition"
+                                    >
+                                        {t('submit')}
+                                    </button>
+                                </form>
+
+                                <button
+                                    onClick={() => setCurrentView('landing')}
+                                    className="mt-6 text-slate-400 hover:text-white transition"
+                                >
+                                    {t('back')}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            // Register Technician Page
+            const RegisterTechnicianPage = () => {
+                const [formData, setFormData] = useState({
+                    name: '',
+                    email: '',
+                    password: '',
+                    confirmPassword: '',
+                    phone: '',
+                    certifications: '',
+                    experience: '',
+                    specialties: ''
+                });
+
+                const handleSubmit = async (e) => {
+                    e.preventDefault();
+                    if (formData.password !== formData.confirmPassword) {
+                        alert('Passwords do not match');
+                        return;
+                    }
+                    const { confirmPassword, ...data } = formData;
+                    await handleRegisterTechnician(data);
+                };
+
+                return (
+                    <div className="min-h-screen flex items-center justify-center p-4">
+                        <div className="max-w-md w-full">
+                            <div className="text-center mb-8">
+                                <Logo />
+                                <h2 className="text-3xl font-bold text-white mt-6">{t('applyTechnician')}</h2>
+                            </div>
+
+                            <div className="bg-slate-800 border border-slate-700 rounded-xl p-8">
+                                <form onSubmit={handleSubmit} className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                                            {t('name')}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={formData.name}
+                                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                            className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:border-red-700 focus:outline-none"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                                            {t('email')}
+                                        </label>
+                                        <input
+                                            type="email"
+                                            value={formData.email}
+                                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                            className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:border-red-700 focus:outline-none"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                                            {t('phone')}
+                                        </label>
+                                        <input
+                                            type="tel"
+                                            value={formData.phone}
+                                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                            className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:border-red-700 focus:outline-none"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                                            Certifications
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={formData.certifications}
+                                            onChange={(e) => setFormData({ ...formData, certifications: e.target.value })}
+                                            placeholder="e.g., CompTIA A+, Network+, Security+"
+                                            className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:border-red-700 focus:outline-none"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                                            Years of Experience
+                                        </label>
+                                        <input
+                                            type="number"
+                                            value={formData.experience}
+                                            onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
+                                            className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:border-red-700 focus:outline-none"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                                            Specialties
+                                        </label>
+                                        <textarea
+                                            value={formData.specialties}
+                                            onChange={(e) => setFormData({ ...formData, specialties: e.target.value })}
+                                            placeholder="e.g., Networking, Hardware Repair, Security, Cloud Services"
+                                            className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:border-red-700 focus:outline-none"
+                                            rows="2"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                                            {t('password')}
+                                        </label>
+                                        <input
+                                            type="password"
+                                            value={formData.password}
+                                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                            className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:border-red-700 focus:outline-none"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                                            {t('confirmPassword')}
+                                        </label>
+                                        <input
+                                            type="password"
+                                            value={formData.confirmPassword}
+                                            onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                                            className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:border-red-700 focus:outline-none"
+                                            required
+                                        />
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        className="w-full py-3 bg-red-700 hover:bg-red-600 text-white rounded-lg font-semibold transition"
+                                    >
+                                        {t('submit')}
+                                    </button>
+                                </form>
+
+                                <button
+                                    onClick={() => setCurrentView('landing')}
+                                    className="mt-6 text-slate-400 hover:text-white transition"
+                                >
+                                    {t('back')}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            // Customer Dashboard
+            const CustomerDashboard = () => {
+                const userRequests = Object.entries(requests)
+                    .filter(([id, req]) => req.customerId === currentUser.id)
+                    .map(([id, req]) => ({ ...req, id }));
+
+                const stats = {
+                    total: userRequests.length,
+                    pending: userRequests.filter(r => r.status === 'pending').length,
+                    active: userRequests.filter(r => r.status === 'active' || r.status === 'in-progress').length,
+                    completed: userRequests.filter(r => r.status === 'completed' || r.status === 'reviewed').length
+                };
+
+                return (
+                    <div className="min-h-screen">
+                        <nav className="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
+                            <div className="max-w-7xl mx-auto px-4 py-4">
+                                <div className="flex justify-between items-center">
+                                    <Logo size="medium" />
+                                    <div className="flex items-center gap-4">
+                                        <span className="text-slate-300">Welcome, {currentUser.name}</span>
+                                        <button
+                                            onClick={handleLogout}
+                                            className="px-4 py-2 bg-red-700 hover:bg-red-600 text-white rounded-lg transition"
+                                        >
+                                            {t('logout')}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </nav>
+
+                        <div className="max-w-7xl mx-auto px-4 py-8">
+                            <div className="flex justify-between items-center mb-8">
+                                <h1 className="text-4xl font-bold text-white">{t('myRequests')}</h1>
+                                <button
+                                    onClick={() => setCurrentView('customer-new-request')}
+                                    className="px-6 py-3 bg-red-700 hover:bg-red-600 text-white rounded-lg font-semibold transition"
+                                >
+                                    + {t('newRequest')}
+                                </button>
+                            </div>
+
+                            <div className="grid md:grid-cols-4 gap-6 mb-8">
+                                <StatsCard title={t('total')} value={stats.total} icon="📊" color="blue" />
+                                <StatsCard title={t('pending')} value={stats.pending} icon="⏳" color="yellow" />
+                                <StatsCard title={t('active')} value={stats.active} icon="🔧" color="blue" />
+                                <StatsCard title={t('completed')} value={stats.completed} icon="✓" color="green" />
+                            </div>
+
+                            <div className="space-y-4">
+                                {userRequests.length === 0 ? (
+                                    <div className="bg-slate-800 border border-slate-700 rounded-xl p-12 text-center">
+                                        <div className="text-6xl mb-4">📋</div>
+                                        <p className="text-xl text-slate-400">No requests yet. Create your first request!</p>
+                                    </div>
+                                ) : (
+                                    userRequests.map(request => (
+                                        <RequestCard key={request.id} request={request} showTechnician={true} />
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            // Customer New Request
+            const CustomerNewRequest = () => {
+                const [formData, setFormData] = useState({
+                    title: '',
+                    description: '',
+                    category: 'hardware',
+                    priority: 'medium',
+                    location: currentUser.address || ''
+                });
+
+                const handleSubmit = async (e) => {
+                    e.preventDefault();
+                    await handleSubmitRequest(formData);
+                };
+
+                return (
+                    <div className="min-h-screen">
+                        <nav className="bg-slate-900 border-b border-slate-800">
+                            <div className="max-w-7xl mx-auto px-4 py-4">
+                                <div className="flex justify-between items-center">
+                                    <Logo size="medium" />
+                                    <button
+                                        onClick={() => setCurrentView('customer-dashboard')}
+                                        className="text-slate-400 hover:text-white transition"
+                                    >
+                                        {t('back')}
+                                    </button>
+                                </div>
+                            </div>
+                        </nav>
+
+                        <div className="max-w-3xl mx-auto px-4 py-12">
+                            <h1 className="text-4xl font-bold text-white mb-8">{t('newRequest')}</h1>
+
+                            <div className="bg-slate-800 border border-slate-700 rounded-xl p-8">
+                                <form onSubmit={handleSubmit} className="space-y-6">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                                            Request Title
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={formData.title}
+                                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                                            placeholder="e.g., Computer won't turn on"
+                                            className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white focus:border-red-700 focus:outline-none"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                                            Description
+                                        </label>
+                                        <textarea
+                                            value={formData.description}
+                                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                            placeholder="Describe the issue in detail..."
+                                            className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white focus:border-red-700 focus:outline-none"
+                                            rows="4"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div className="grid md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                                                Category
+                                            </label>
+                                            <select
+                                                value={formData.category}
+                                                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                                className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white focus:border-red-700 focus:outline-none"
+                                            >
+                                                <option value="hardware">Hardware</option>
+                                                <option value="software">Software</option>
+                                                <option value="network">Network</option>
+                                                <option value="security">Security</option>
+                                                <option value="other">Other</option>
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                                                Priority
+                                            </label>
+                                            <select
+                                                value={formData.priority}
+                                                onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                                                className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white focus:border-red-700 focus:outline-none"
+                                            >
+                                                <option value="low">Low</option>
+                                                <option value="medium">Medium</option>
+                                                <option value="high">High</option>
+                                                <option value="critical">Critical</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                                            Location
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={formData.location}
+                                            onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                                            className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white focus:border-red-700 focus:outline-none"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div className="flex gap-4">
+                                        <button
+                                            type="button"
+                                            onClick={() => setCurrentView('customer-dashboard')}
+                                            className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-semibold transition"
+                                        >
+                                            {t('cancel')}
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            className="flex-1 py-3 bg-red-700 hover:bg-red-600 text-white rounded-lg font-semibold transition"
+                                        >
+                                            {t('submit')} Request
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            // Technician Dashboard
+            const TechnicianDashboard = () => {
+                const techRequests = Object.entries(requests)
+                    .filter(([id, req]) => req.technicianId === currentUser.id || req.status === 'pending')
+                    .map(([id, req]) => ({ ...req, id }));
+
+                const myJobs = techRequests.filter(r => r.technicianId === currentUser.id);
+                const availableJobs = techRequests.filter(r => r.status === 'pending');
+
+                const handleAcceptJob = async (requestId) => {
+                    try {
+                        const request = requests[requestId];
+                        await DB.saveRequest(requestId, {
+                            ...request,
+                            technicianId: currentUser.id,
+                            technicianName: currentUser.name,
+                            status: 'active'
+                        });
+                        alert('Job accepted!');
+                    } catch (error) {
+                        console.error('Error accepting job:', error);
+                        alert('Error accepting job');
+                    }
+                };
+
+                const handleCompleteJob = async (requestId) => {
+                    const notes = prompt('Enter completion notes:');
+                    if (notes) {
+                        try {
+                            const request = requests[requestId];
+                            await DB.saveRequest(requestId, {
+                                ...request,
+                                status: 'completed',
+                                completionNotes: notes,
+                                completedAt: new Date().toISOString()
+                            });
+                            alert('Job marked as completed!');
+                        } catch (error) {
+                            console.error('Error completing job:', error);
+                            alert('Error completing job');
+                        }
+                    }
+                };
+
+                return (
+                    <div className="min-h-screen">
+                        <nav className="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
+                            <div className="max-w-7xl mx-auto px-4 py-4">
+                                <div className="flex justify-between items-center">
+                                    <Logo size="medium" />
+                                    <div className="flex items-center gap-4">
+                                        <span className="text-slate-300">Welcome, {currentUser.name}</span>
+                                        <button
+                                            onClick={handleLogout}
+                                            className="px-4 py-2 bg-red-700 hover:bg-red-600 text-white rounded-lg transition"
+                                        >
+                                            {t('logout')}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </nav>
+
+                        <div className="max-w-7xl mx-auto px-4 py-8">
+                            <h1 className="text-4xl font-bold text-white mb-8">{t('myJobs')}</h1>
+
+                            <div className="grid md:grid-cols-3 gap-6 mb-8">
+                                <StatsCard 
+                                    title="My Active Jobs" 
+                                    value={myJobs.filter(r => r.status === 'active' || r.status === 'in-progress').length} 
+                                    icon="🔧" 
+                                    color="blue" 
+                                />
+                                <StatsCard 
+                                    title="Completed" 
+                                    value={myJobs.filter(r => r.status === 'completed' || r.status === 'reviewed').length} 
+                                    icon="✓" 
+                                    color="green" 
+                                />
+                                <StatsCard 
+                                    title="Available Jobs" 
+                                    value={availableJobs.length} 
+                                    icon="📋" 
+                                    color="yellow" 
+                                />
+                            </div>
+
+                            <div className="mb-8">
+                                <h2 className="text-2xl font-bold text-white mb-4">My Active Jobs</h2>
+                                <div className="space-y-4">
+                                    {myJobs.length === 0 ? (
+                                        <div className="bg-slate-800 border border-slate-700 rounded-xl p-12 text-center">
+                                            <div className="text-6xl mb-4">🔧</div>
+                                            <p className="text-xl text-slate-400">No active jobs. Check available jobs below!</p>
+                                        </div>
+                                    ) : (
+                                        myJobs.map(request => (
+                                            <RequestCard 
+                                                key={request.id} 
+                                                request={request} 
+                                                showCustomer={true}
+                                                onAction={
+                                                    (request.status === 'active' || request.status === 'in-progress') && (
+                                                        <button
+                                                            onClick={() => handleCompleteJob(request.id)}
+                                                            className="px-4 py-2 bg-green-700 hover:bg-green-600 text-white rounded-lg font-semibold transition"
+                                                        >
+                                                            Mark Complete
+                                                        </button>
+                                                    )
+                                                }
+                                            />
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+
+                            <div>
+                                <h2 className="text-2xl font-bold text-white mb-4">Available Jobs</h2>
+                                <div className="space-y-4">
+                                    {availableJobs.length === 0 ? (
+                                        <div className="bg-slate-800 border border-slate-700 rounded-xl p-12 text-center">
+                                            <div className="text-6xl mb-4">📋</div>
+                                            <p className="text-xl text-slate-400">No available jobs at the moment.</p>
+                                        </div>
+                                    ) : (
+                                        availableJobs.map(request => (
+                                            <RequestCard 
+                                                key={request.id} 
+                                                request={request} 
+                                                showCustomer={true}
+                                                onAction={
+                                                    <button
+                                                        onClick={() => handleAcceptJob(request.id)}
+                                                        className="px-4 py-2 bg-blue-700 hover:bg-blue-600 text-white rounded-lg font-semibold transition"
+                                                    >
+                                                        Accept Job
+                                                    </button>
+                                                }
+                                            />
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            // Admin Dashboard
+            const AdminDashboard = () => {
+                const allRequests = Object.entries(requests).map(([id, req]) => ({ ...req, id }));
+                const allTechnicians = Object.entries(technicians).map(([id, tech]) => ({ ...tech, id }));
+                const allCustomers = Object.entries(customers).map(([id, cust]) => ({ ...cust, id }));
+
+                const stats = {
+                    totalRequests: allRequests.length,
+                    pendingRequests: allRequests.filter(r => r.status === 'pending').length,
+                    activeTechnicians: allTechnicians.filter(t => t.status === 'approved').length,
+                    totalCustomers: allCustomers.length
+                };
+
+                return (
+                    <div className="min-h-screen">
+                        <nav className="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
+                            <div className="max-w-7xl mx-auto px-4 py-4">
+                                <div className="flex justify-between items-center">
+                                    <Logo size="medium" />
+                                    <div className="flex items-center gap-4">
+                                        <span className="text-slate-300">Admin Panel</span>
+                                        <button
+                                            onClick={handleLogout}
+                                            className="px-4 py-2 bg-red-700 hover:bg-red-600 text-white rounded-lg transition"
+                                        >
+                                            {t('logout')}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </nav>
+
+                        <div className="max-w-7xl mx-auto px-4 py-8">
+                            <h1 className="text-4xl font-bold text-white mb-8">Admin Dashboard</h1>
+
+                            <div className="grid md:grid-cols-4 gap-6 mb-8">
+                                <StatsCard title="Total Requests" value={stats.totalRequests} icon="📊" color="blue" />
+                                <StatsCard title="Pending Requests" value={stats.pendingRequests} icon="⏳" color="yellow" />
+                                <StatsCard title="Active Technicians" value={stats.activeTechnicians} icon="👨‍💻" color="green" />
+                                <StatsCard title="Total Customers" value={stats.totalCustomers} icon="👥" color="purple" />
+                            </div>
+
+                            <div className="grid md:grid-cols-3 gap-6">
+                                <button
+                                    onClick={() => setCurrentView('admin-requests')}
+                                    className="bg-slate-800 border border-slate-700 rounded-xl p-8 hover:border-red-700 transition card-hover text-left"
+                                >
+                                    <div className="text-4xl mb-4">📋</div>
+                                    <h3 className="text-2xl font-bold text-white mb-2">Manage Requests</h3>
+                                    <p className="text-slate-400">View and manage all service requests</p>
+                                </button>
+
+                                <button
+                                    onClick={() => setCurrentView('admin-technicians')}
+                                    className="bg-slate-800 border border-slate-700 rounded-xl p-8 hover:border-red-700 transition card-hover text-left"
+                                >
+                                    <div className="text-4xl mb-4">👨‍💻</div>
+                                    <h3 className="text-2xl font-bold text-white mb-2">Manage Technicians</h3>
+                                    <p className="text-slate-400">Approve and manage technician accounts</p>
+                                </button>
+
+                                <button
+                                    onClick={() => setCurrentView('admin-customers')}
+                                    className="bg-slate-800 border border-slate-700 rounded-xl p-8 hover:border-red-700 transition card-hover text-left"
+                                >
+                                    <div className="text-4xl mb-4">👥</div>
+                                    <h3 className="text-2xl font-bold text-white mb-2">Manage Customers</h3>
+                                    <p className="text-slate-400">View and manage customer accounts</p>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            // Admin Technicians Page
+            const AdminTechniciansPage = () => {
+                const allTechnicians = Object.entries(technicians).map(([id, tech]) => ({ ...tech, id }));
+
+                const handleApproveTechnician = async (techId) => {
+                    try {
+                        const tech = technicians[techId];
+                        await DB.saveTechnician(techId, {
+                            ...tech,
+                            status: 'approved'
+                        });
+                        alert('Technician approved!');
+                    } catch (error) {
+                        console.error('Error approving technician:', error);
+                        alert('Error approving technician');
+                    }
+                };
+
+                const handleRejectTechnician = async (techId) => {
+                    if (confirm('Are you sure you want to reject this technician?')) {
+                        try {
+                            await DB.deleteTechnician(techId);
+                            alert('Technician rejected');
+                        } catch (error) {
+                            console.error('Error rejecting technician:', error);
+                            alert('Error rejecting technician');
+                        }
+                    }
+                };
+
+                return (
+                    <div className="min-h-screen">
+                        <nav className="bg-slate-900 border-b border-slate-800">
+                            <div className="max-w-7xl mx-auto px-4 py-4">
+                                <div className="flex justify-between items-center">
+                                    <Logo size="medium" />
+                                    <button
+                                        onClick={() => setCurrentView('admin-dashboard')}
+                                        className="text-slate-400 hover:text-white transition"
+                                    >
+                                        {t('back')}
+                                    </button>
+                                </div>
+                            </div>
+                        </nav>
+
+                        <div className="max-w-7xl mx-auto px-4 py-8">
+                            <h1 className="text-4xl font-bold text-white mb-8">Manage Technicians</h1>
+
+                            <div className="space-y-4">
+                                {allTechnicians.length === 0 ? (
+                                    <div className="bg-slate-800 border border-slate-700 rounded-xl p-12 text-center">
+                                        <div className="text-6xl mb-4">👨‍💻</div>
+                                        <p className="text-xl text-slate-400">No technicians yet.</p>
+                                    </div>
+                                ) : (
+                                    allTechnicians.map(tech => (
+                                        <div key={tech.id} className="bg-slate-800 border border-slate-700 rounded-xl p-6 hover:border-red-700 transition card-hover">
+                                            <div className="flex justify-between items-start">
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-3 mb-3">
+                                                        <h3 className="text-xl font-bold text-white">{tech.name}</h3>
+                                                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                                            tech.status === 'approved' 
+                                                                ? 'bg-green-500/20 text-green-500 border border-green-500/30' 
+                                                                : 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/30'
+                                                        }`}>
+                                                            {tech.status}
+                                                        </span>
+                                                    </div>
+                                                    <div className="grid md:grid-cols-2 gap-4 text-sm">
+                                                        <div>
+                                                            <p className="text-slate-500">Email</p>
+                                                            <p className="text-white">{tech.email}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-slate-500">Phone</p>
+                                                            <p className="text-white">{tech.phone}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-slate-500">Certifications</p>
+                                                            <p className="text-white">{tech.certifications}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-slate-500">Experience</p>
+                                                            <p className="text-white">{tech.experience} years</p>
+                                                        </div>
+                                                        <div className="md:col-span-2">
+                                                            <p className="text-slate-500">Specialties</p>
+                                                            <p className="text-white">{tech.specialties}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {tech.status === 'pending' && (
+                                                    <div className="flex gap-2 ml-4">
+                                                        <button
+                                                            onClick={() => handleApproveTechnician(tech.id)}
+                                                            className="px-4 py-2 bg-green-700 hover:bg-green-600 text-white rounded-lg font-semibold transition"
+                                                        >
+                                                            Approve
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleRejectTechnician(tech.id)}
+                                                            className="px-4 py-2 bg-red-700 hover:bg-red-600 text-white rounded-lg font-semibold transition"
+                                                        >
+                                                            Reject
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            // Admin Customers Page
+            const AdminCustomersPage = () => {
+                const allCustomers = Object.entries(customers).map(([id, cust]) => ({ ...cust, id }));
+
+                return (
+                    <div className="min-h-screen">
+                        <nav className="bg-slate-900 border-b border-slate-800">
+                            <div className="max-w-7xl mx-auto px-4 py-4">
+                                <div className="flex justify-between items-center">
+                                    <Logo size="medium" />
+                                    <button
+                                        onClick={() => setCurrentView('admin-dashboard')}
+                                        className="text-slate-400 hover:text-white transition"
+                                    >
+                                        {t('back')}
+                                    </button>
+                                </div>
+                            </div>
+                        </nav>
+
+                        <div className="max-w-7xl mx-auto px-4 py-8">
+                            <h1 className="text-4xl font-bold text-white mb-8">Manage Customers</h1>
+
+                            <div className="space-y-4">
+                                {allCustomers.length === 0 ? (
+                                    <div className="bg-slate-800 border border-slate-700 rounded-xl p-12 text-center">
+                                        <div className="text-6xl mb-4">👥</div>
+                                        <p className="text-xl text-slate-400">No customers yet.</p>
+                                    </div>
+                                ) : (
+                                    allCustomers.map(customer => (
+                                        <div key={customer.id} className="bg-slate-800 border border-slate-700 rounded-xl p-6 hover:border-red-700 transition card-hover">
+                                            <h3 className="text-xl font-bold text-white mb-3">{customer.name}</h3>
+                                            <div className="grid md:grid-cols-2 gap-4 text-sm">
+                                                <div>
+                                                    <p className="text-slate-500">Email</p>
+                                                    <p className="text-white">{customer.email}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-slate-500">Company</p>
+                                                    <p className="text-white">{customer.company}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-slate-500">Phone</p>
+                                                    <p className="text-white">{customer.phone}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-slate-500">Address</p>
+                                                    <p className="text-white">{customer.address}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-slate-500">Joined</p>
+                                                    <p className="text-white">{new Date(customer.createdAt).toLocaleDateString()}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            return (
+                <div>
+                    {currentView === 'landing' && <LandingPage />}
+                    {currentView === 'login' && <LoginPage />}
+                    {currentView === 'register' && <RegisterPage />}
+                    {currentView === 'register-technician' && <RegisterTechnicianPage />}
+                    {currentView === 'customer-dashboard' && <CustomerDashboard />}
+                    {currentView === 'customer-new-request' && <CustomerNewRequest />}
+                    {currentView === 'admin-dashboard' && <AdminDashboard />}
+                    {currentView === 'admin-technicians' && <AdminTechniciansPage />}
+                    {currentView === 'admin-customers' && <AdminCustomersPage />}
+                    {currentView === 'technician-dashboard' && <TechnicianDashboard />}
+                </div>
+            );
+        };
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
