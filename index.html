@@ -45,16 +45,15 @@
         // ============================================
         // FIREBASE CONFIGURATION
         // ============================================
-        // TODO: Replace with your Firebase project credentials
-        // Get these from: Firebase Console > Project Settings > Your Apps
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-            databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT_ID.appspot.com",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            apiKey: "AIzaSyAnCHNfoslDSbrvqlQsLFcicjmo4G0ECVc",
+            authDomain: "hanimus-dispatch.firebaseapp.com",
+            databaseURL: "https://hanimus-dispatch-default-rtdb.firebaseio.com",
+            projectId: "hanimus-dispatch",
+            storageBucket: "hanimus-dispatch.firebasestorage.app",
+            messagingSenderId: "779431998540",
+            appId: "1:779431998540:web:1948b2777c77a5880930e9",
+            measurementId: "G-K17S14ZD1P"
         };
 
         // Initialize Firebase
@@ -300,36 +299,81 @@
             useEffect(() => {
                 const initApp = async () => {
                     try {
+                        console.log('🔥 Starting Firebase initialization...');
+                        console.log('📡 Database URL:', firebaseConfig.databaseURL);
+                        
+                        // Test Firebase connection
+                        console.log('🔍 Testing Firebase connection...');
+                        await database.ref('.info/connected').once('value');
+                        console.log('✅ Firebase connected successfully!');
+                        
                         // Load initial data
+                        console.log('📥 Loading data from Firebase...');
                         const [customersData, techniciansData, requestsData] = await Promise.all([
                             DB.getCustomers(),
                             DB.getTechnicians(),
                             DB.getRequests()
                         ]);
                         
+                        console.log('✅ Customers loaded:', Object.keys(customersData).length);
+                        console.log('✅ Technicians loaded:', Object.keys(techniciansData).length);
+                        console.log('✅ Requests loaded:', Object.keys(requestsData).length);
+                        
                         setCustomers(customersData);
                         setTechnicians(techniciansData);
                         setRequests(requestsData);
 
                         // Set up real-time listeners
+                        console.log('👂 Setting up real-time listeners...');
                         DB.onCustomersChange(setCustomers);
                         DB.onTechniciansChange(setTechnicians);
                         DB.onRequestsChange(setRequests);
+                        console.log('✅ Listeners active!');
 
                         // Check for saved session (using localStorage for session only)
                         const savedUser = localStorage.getItem('currentUser');
                         if (savedUser) {
+                            console.log('👤 Found saved session');
                             const user = JSON.parse(savedUser);
                             setCurrentUser(user);
                             
                             if (user.role === 'customer') setCurrentView('customer-dashboard');
                             else if (user.role === 'technician') setCurrentView('technician-dashboard');
                             else if (user.role === 'admin') setCurrentView('admin-dashboard');
+                        } else {
+                            console.log('👤 No saved session found');
                         }
+                        
+                        console.log('🎉 Initialization complete!');
                     } catch (error) {
-                        console.error('Error initializing app:', error);
-                        alert('Error connecting to database. Please check your Firebase configuration.');
+                        console.error('❌ ERROR during initialization:', error);
+                        console.error('Error details:', {
+                            message: error.message,
+                            code: error.code,
+                            stack: error.stack
+                        });
+                        
+                        // Show user-friendly error
+                        let errorMessage = 'Error connecting to database.\n\n';
+                        
+                        if (error.code === 'PERMISSION_DENIED') {
+                            errorMessage += '🔒 PERMISSION DENIED\n\nYour database rules are blocking access.\n\n';
+                            errorMessage += 'FIX: Go to Firebase Console → Database → Rules\n';
+                            errorMessage += 'Set to: { "rules": { ".read": true, ".write": true } }';
+                        } else if (error.message.includes('network')) {
+                            errorMessage += '🌐 NETWORK ERROR\n\nCannot connect to Firebase.\n\n';
+                            errorMessage += 'Check your internet connection.';
+                        } else if (error.message.includes('not found')) {
+                            errorMessage += '📦 DATABASE NOT FOUND\n\nYou need to create the Realtime Database.\n\n';
+                            errorMessage += 'FIX: Firebase Console → Create Database → Test Mode';
+                        } else {
+                            errorMessage += 'Details: ' + error.message + '\n\n';
+                            errorMessage += 'Check the browser console (F12) for more information.';
+                        }
+                        
+                        alert(errorMessage);
                     } finally {
+                        console.log('⏱️ Setting loading to false');
                         setLoading(false);
                     }
                 };
@@ -338,6 +382,7 @@
 
                 // Cleanup listeners on unmount
                 return () => {
+                    console.log('🧹 Cleaning up listeners...');
                     DB.offCustomersChange();
                     DB.offTechniciansChange();
                     DB.offRequestsChange();
@@ -474,10 +519,27 @@
 
             if (loading) {
                 return (
-                    <div className="min-h-screen flex items-center justify-center">
-                        <div className="text-center">
-                            <div className="text-4xl mb-4">⚙️</div>
-                            <p className="text-xl">Loading...</p>
+                    <div className="min-h-screen flex items-center justify-center bg-slate-950">
+                        <div className="text-center max-w-2xl px-4">
+                            <div className="text-6xl mb-6 animate-spin">⚙️</div>
+                            <p className="text-2xl text-white mb-4">Connecting to Firebase...</p>
+                            <p className="text-slate-400 mb-6">If this takes more than 5 seconds, there's a problem.</p>
+                            <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 text-left">
+                                <p className="text-white font-bold mb-2">🔍 Debugging Steps:</p>
+                                <ol className="text-slate-300 space-y-2 text-sm">
+                                    <li>1. Press <kbd className="bg-slate-900 px-2 py-1 rounded">F12</kbd> to open Developer Console</li>
+                                    <li>2. Click the "Console" tab</li>
+                                    <li>3. Look for RED error messages</li>
+                                    <li>4. Check TROUBLESHOOTING.md for solutions</li>
+                                </ol>
+                            </div>
+                            <div className="mt-6 bg-yellow-900/30 border border-yellow-600 rounded-xl p-4">
+                                <p className="text-yellow-500 font-semibold mb-2">⚠️ Most Common Issue:</p>
+                                <p className="text-yellow-300 text-sm">Database rules not set to TEST MODE</p>
+                                <p className="text-yellow-400 text-xs mt-2">
+                                    Fix: Firebase Console → Database → Rules → Set to test mode
+                                </p>
+                            </div>
                         </div>
                     </div>
                 );
