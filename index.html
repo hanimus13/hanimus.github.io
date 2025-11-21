@@ -1349,11 +1349,63 @@
                     }
                 };
 
+                const acceptBudgetProposal = async (requestId) => {
+                    if (confirm('Accept the proposed budget?')) {
+                        const requests = await DB.getRequests();
+                        const request = requests[requestId];
+                        await DB.saveRequest(requestId, {
+                            ...request,
+                            budget: request.proposedBudget,
+                            status: 'pending',
+                            proposedBudget: null,
+                            originalBudget: null,
+                            proposedBy: null,
+                            budgetAcceptedAt: Date.now()
+                        });
+                        alert('Budget accepted! Request is now pending admin approval.');
+                        loadData();
+                    }
+                };
+
+                const rejectBudgetProposal = async (requestId) => {
+                    if (confirm('Reject the proposed budget and cancel this request?')) {
+                        const requests = await DB.getRequests();
+                        const request = requests[requestId];
+                        await DB.saveRequest(requestId, {
+                            ...request,
+                            status: 'cancelled',
+                            cancellationReason: 'Customer rejected budget proposal',
+                            cancelledAt: Date.now()
+                        });
+                        alert('Request cancelled.');
+                        loadData();
+                    }
+                };
+
+                const counterOfferBudget = async (requestId, proposedBudget) => {
+                    const counterOffer = prompt(`Admin proposed: $${proposedBudget}\nEnter your counter offer:`, proposedBudget);
+                    if (counterOffer && !isNaN(counterOffer) && parseFloat(counterOffer) > 0) {
+                        const requests = await DB.getRequests();
+                        const request = requests[requestId];
+                        await DB.saveRequest(requestId, {
+                            ...request,
+                            status: 'budget-counter-offer',
+                            proposedBudget: parseFloat(counterOffer),
+                            adminProposedBudget: request.proposedBudget,
+                            proposedBy: 'customer',
+                            counterOfferedAt: Date.now()
+                        });
+                        alert(`Counter offer sent to admin!\nAdmin proposed: $${proposedBudget}\nYour counter offer: $${counterOffer}`);
+                        loadData();
+                    }
+                };
+
                 const stats = {
                     pending: requests.filter(r => r.status === 'pending').length,
                     inProgress: requests.filter(r => r.status === 'in-progress').length,
                     completed: requests.filter(r => r.status === 'completed').length,
-                    activeContracts: contracts.filter(c => c.status === 'active').length
+                    activeContracts: contracts.filter(c => c.status === 'active').length,
+                    budgetNegotiation: requests.filter(r => r.status === 'budget-negotiation').length
                 };
 
                 return (
@@ -1392,7 +1444,7 @@
                                 </div>
 
                                 {/* Stats */}
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+                                <div className="grid grid-cols-2 md:grid-cols-5 gap-6 mb-8">
                                     <div className="stat-card p-6 rounded-xl">
                                         <div className="text-3xl font-bold text-yellow-500 mb-1">{stats.pending}</div>
                                         <div className="text-slate-400 text-sm">Pending Requests</div>
@@ -1409,7 +1461,83 @@
                                         <div className="text-3xl font-bold text-purple-500 mb-1">{stats.activeContracts}</div>
                                         <div className="text-slate-400 text-sm">Active Contracts</div>
                                     </div>
+                                    {stats.budgetNegotiation > 0 && (
+                                        <div className="stat-card p-6 rounded-xl border-2 border-yellow-500/50">
+                                            <div className="text-3xl font-bold text-yellow-500 mb-1">{stats.budgetNegotiation}</div>
+                                            <div className="text-slate-400 text-sm">⚠️ Needs Response</div>
+                                        </div>
+                                    )}
                                 </div>
+
+                                {/* Budget Negotiation Section - Show at top if any exist */}
+                                {requests.filter(r => r.status === 'budget-negotiation').length > 0 && (
+                                    <div className="mb-8">
+                                        <h2 className="text-2xl font-bold text-yellow-500 mb-4 flex items-center">
+                                            <span className="mr-2">💰</span>
+                                            Budget Proposals Pending Your Response
+                                        </h2>
+                                        <div className="space-y-4">
+                                            {requests.filter(r => r.status === 'budget-negotiation').map(request => (
+                                                <div key={request.id} className="bg-gradient-to-br from-yellow-500/10 to-amber-500/10 border-2 border-yellow-500/40 p-6 rounded-xl">
+                                                    <div className="flex items-start justify-between">
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center gap-2 mb-3">
+                                                                <h3 className="text-xl font-bold text-white">{request.issueType}</h3>
+                                                                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-yellow-500/20 text-yellow-500">
+                                                                    ⚠️ Budget Negotiation
+                                                                </span>
+                                                            </div>
+                                                            
+                                                            <p className="text-slate-300 text-sm mb-4">{request.description}</p>
+                                                            
+                                                            <div className="bg-slate-900/50 p-4 rounded-lg mb-4">
+                                                                <div className="grid md:grid-cols-2 gap-4">
+                                                                    <div>
+                                                                        <span className="text-slate-400 text-sm">Original Budget:</span>
+                                                                        <div className="text-xl font-bold text-slate-300">${request.originalBudget || request.budget}</div>
+                                                                    </div>
+                                                                    <div>
+                                                                        <span className="text-slate-400 text-sm">Admin Proposed:</span>
+                                                                        <div className="text-2xl font-bold text-yellow-500">${request.proposedBudget}</div>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="mt-3 text-xs text-slate-500">
+                                                                    Proposed {new Date(request.proposedAt).toLocaleString()}
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="text-sm text-slate-400 mb-4">
+                                                                <p>💡 The admin has proposed a budget adjustment for this request.</p>
+                                                                <p className="mt-1">You can accept, reject, or make a counter offer.</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="grid md:grid-cols-3 gap-3 mt-4">
+                                                        <button
+                                                            onClick={() => acceptBudgetProposal(request.id)}
+                                                            className="px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-semibold"
+                                                        >
+                                                            ✓ Accept ${request.proposedBudget}
+                                                        </button>
+                                                        <button
+                                                            onClick={() => counterOfferBudget(request.id, request.proposedBudget)}
+                                                            className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-semibold"
+                                                        >
+                                                            💬 Counter Offer
+                                                        </button>
+                                                        <button
+                                                            onClick={() => rejectBudgetProposal(request.id)}
+                                                            className="px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm font-semibold"
+                                                        >
+                                                            ✕ Reject & Cancel
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* Quick Actions */}
                                 <div className="grid md:grid-cols-2 gap-6 mb-12">
@@ -1452,7 +1580,7 @@
                                         </div>
                                     ) : (
                                         <div className="space-y-4">
-                                            {requests.slice(0, 5).map(request => (
+                                            {requests.filter(r => r.status !== 'budget-negotiation').slice(0, 5).map(request => (
                                                 <div key={request.id} className="profile-card p-4 rounded-xl">
                                                     <div className="flex items-start justify-between">
                                                         <div className="flex-1">
@@ -1464,6 +1592,7 @@
                                                                     request.status === 'in-progress' ? 'bg-purple-500/20 text-purple-500' :
                                                                     request.status === 'awaiting-review' ? 'bg-orange-500/20 text-orange-500' :
                                                                     request.status === 'completed' ? 'bg-green-500/20 text-green-500' :
+                                                                    request.status === 'budget-counter-offer' ? 'bg-blue-500/20 text-blue-500' :
                                                                     'bg-slate-500/20 text-slate-400'
                                                                 }`}>
                                                                     {request.status}
@@ -1512,34 +1641,35 @@
             };
 
             // ============================================
-            // CUSTOMER QUICK FIX (Local Techs)
+            // CUSTOMER QUICK FIX - CREATE REQUEST
             // ============================================
             const CustomerQuickFix = () => {
-                const [technicians, setTechnicians] = useState([]);
-                const [filteredTechs, setFilteredTechs] = useState([]);
-                const [selectedTech, setSelectedTech] = useState(null);
-                const [showRequestForm, setShowRequestForm] = useState(false);
+                const [formData, setFormData] = useState({
+                    issueType: '',
+                    description: '',
+                    priority: 'medium',
+                    budget: ''
+                });
 
-                useEffect(() => {
-                    loadTechnicians();
-                }, []);
-
-                const loadTechnicians = async () => {
-                    const allTechs = await DB.getTechnicians();
-                    const techArray = Object.entries(allTechs).map(([id, tech]) => ({ id, ...tech }));
+                const handleSubmit = async (e) => {
+                    e.preventDefault();
                     
-                    // Filter by customer's area (same city or state)
-                    const localTechs = techArray.filter(tech => 
-                        tech.city === currentUser.city || tech.state === currentUser.state
-                    );
-                    
-                    setTechnicians(localTechs);
-                    setFilteredTechs(localTechs);
-                };
+                    const requestId = Date.now().toString();
+                    const newRequest = {
+                        ...formData,
+                        customerId: currentUser.id,
+                        customerName: currentUser.name,
+                        customerEmail: currentUser.email,
+                        customerPhone: currentUser.phone,
+                        city: currentUser.city,
+                        state: currentUser.state,
+                        status: 'pending',
+                        createdAt: Date.now()
+                    };
 
-                const handleHireTech = (tech) => {
-                    setSelectedTech(tech);
-                    setShowRequestForm(true);
+                    await DB.saveRequest(requestId, newRequest);
+                    alert('Request submitted! Waiting for admin approval.');
+                    setCurrentView('customer-dashboard');
                 };
 
                 return (
@@ -1555,95 +1685,106 @@
                                         <span>←</span>
                                         <span>Back</span>
                                     </button>
-                                    <span className="text-xl font-bold text-white">Quick Fix - Local Technicians</span>
+                                    <span className="text-xl font-bold text-white">Create Quick Fix Request</span>
                                     <div className="w-20"></div>
                                 </div>
                             </div>
                         </nav>
 
                         <div className="pt-24 pb-12 px-4">
-                            <div className="max-w-7xl mx-auto">
-                                <div className="mb-8">
-                                    <h1 className="text-4xl font-bold text-white mb-2">Find Local Technicians</h1>
-                                    <p className="text-slate-400">Certified IT professionals in your area • {currentUser.city}, {currentUser.state}</p>
-                                </div>
-
-                                {/* Technicians Grid */}
-                                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {filteredTechs.length === 0 ? (
-                                        <div className="col-span-full text-center py-16 text-slate-400">
-                                            <div className="text-6xl mb-4">🔍</div>
-                                            <p>No local technicians found in your area</p>
+                            <div className="max-w-3xl mx-auto">
+                                <div className="profile-card p-8 rounded-2xl">
+                                    <div className="flex items-center space-x-3 mb-6">
+                                        <div className="w-14 h-14 bg-red-600/20 rounded-xl flex items-center justify-center">
+                                            <span className="text-3xl">⚡</span>
                                         </div>
-                                    ) : (
-                                        filteredTechs.map(tech => (
-                                            <div key={tech.id} className="profile-card p-6 rounded-xl">
-                                                <div className="flex items-start justify-between mb-4">
-                                                    <div className="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center text-white text-xl font-bold">
-                                                        {tech.name.charAt(0)}
-                                                    </div>
-                                                    <span className="skill-badge">{tech.specialty}</span>
-                                                </div>
+                                        <div>
+                                            <h1 className="text-3xl font-bold text-white">Quick Fix Request</h1>
+                                            <p className="text-slate-400">Get immediate IT support</p>
+                                        </div>
+                                    </div>
 
-                                                <h3 className="text-xl font-bold text-white mb-1">{tech.name}</h3>
-                                                <p className="text-slate-400 text-sm mb-3">
-                                                    📍 {tech.city}, {tech.state}
-                                                </p>
+                                    <form onSubmit={handleSubmit} className="space-y-6">
+                                        <div>
+                                            <label className="block text-slate-400 mb-2 font-semibold">Issue Type *</label>
+                                            <select
+                                                value={formData.issueType}
+                                                onChange={(e) => setFormData({...formData, issueType: e.target.value})}
+                                                className="w-full px-4 py-3 bg-slate-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                                                required
+                                            >
+                                                <option value="">Select issue type</option>
+                                                <option value="Network Issues">Network Issues</option>
+                                                <option value="Computer Repair">Computer Repair</option>
+                                                <option value="Software Installation">Software Installation</option>
+                                                <option value="Virus Removal">Virus Removal</option>
+                                                <option value="Hardware Setup">Hardware Setup</option>
+                                                <option value="Printer Issues">Printer Issues</option>
+                                                <option value="Email Problems">Email Problems</option>
+                                                <option value="Data Recovery">Data Recovery</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
 
-                                                <div className="flex items-center space-x-4 mb-4 text-sm">
-                                                    <div className="flex items-center space-x-1">
-                                                        <span className="text-yellow-500">⭐</span>
-                                                        <span className="text-white font-semibold">{tech.rating}</span>
-                                                    </div>
-                                                    <div className="text-slate-400">
-                                                        {tech.completedJobs} jobs
-                                                    </div>
-                                                    <div className="text-green-500 font-semibold">
-                                                        ${tech.hourlyRate}/hr
-                                                    </div>
-                                                </div>
+                                        <div>
+                                            <label className="block text-slate-400 mb-2 font-semibold">Description *</label>
+                                            <textarea
+                                                value={formData.description}
+                                                onChange={(e) => setFormData({...formData, description: e.target.value})}
+                                                className="w-full px-4 py-3 bg-slate-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                                                rows="5"
+                                                placeholder="Please describe your issue in detail..."
+                                                required
+                                            ></textarea>
+                                        </div>
 
-                                                <p className="text-slate-400 text-sm mb-4 line-clamp-2">
-                                                    {tech.bio}
-                                                </p>
-
-                                                <div className="flex flex-wrap gap-2 mb-4">
-                                                    {tech.skills?.slice(0, 3).map((skill, idx) => (
-                                                        <span key={idx} className="skill-badge text-xs">
-                                                            {skill}
-                                                        </span>
-                                                    ))}
-                                                </div>
-
-                                                <button
-                                                    onClick={() => handleHireTech(tech)}
-                                                    className="w-full py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition"
+                                        <div className="grid md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="block text-slate-400 mb-2 font-semibold">Priority *</label>
+                                                <select
+                                                    value={formData.priority}
+                                                    onChange={(e) => setFormData({...formData, priority: e.target.value})}
+                                                    className="w-full px-4 py-3 bg-slate-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                                                    required
                                                 >
-                                                    Request Service
-                                                </button>
+                                                    <option value="low">Low - Can wait</option>
+                                                    <option value="medium">Medium - Within a few days</option>
+                                                    <option value="high">High - Within 24 hours</option>
+                                                    <option value="urgent">Urgent - ASAP</option>
+                                                </select>
                                             </div>
-                                        ))
-                                    )}
+
+                                            <div>
+                                                <label className="block text-slate-400 mb-2 font-semibold">Budget ($) *</label>
+                                                <input
+                                                    type="number"
+                                                    value={formData.budget}
+                                                    onChange={(e) => setFormData({...formData, budget: e.target.value})}
+                                                    className="w-full px-4 py-3 bg-slate-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                                                    placeholder="e.g., 100"
+                                                    min="0"
+                                                    required
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                                            <h3 className="text-white font-semibold mb-2">📍 Service Location</h3>
+                                            <p className="text-slate-400 text-sm">
+                                                {currentUser.city}, {currentUser.state}
+                                            </p>
+                                        </div>
+
+                                        <button
+                                            type="submit"
+                                            className="w-full py-4 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-lg transition"
+                                        >
+                                            Submit Request
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
                         </div>
-
-                        {/* Request Form Modal */}
-                        {showRequestForm && selectedTech && (
-                            <QuickFixRequestForm 
-                                tech={selectedTech}
-                                customer={currentUser}
-                                onClose={() => {
-                                    setShowRequestForm(false);
-                                    setSelectedTech(null);
-                                }}
-                                onSubmit={() => {
-                                    setShowRequestForm(false);
-                                    setSelectedTech(null);
-                                    setCurrentView('customer-dashboard');
-                                }}
-                            />
-                        )}
                     </div>
                 );
             };
@@ -2054,11 +2195,12 @@
                         budget: parseFloat(formData.budget),
                         startDate: formData.startDate,
                         requirements: formData.requirements,
-                        status: 'pending',
+                        status: 'pending-contractor-approval',
                         createdAt: new Date().toISOString()
                     };
 
                     await DB.saveContract(contractId, contractData);
+                    alert('Contract proposal sent to contractor for approval!');
                     onSubmit();
                 };
 
@@ -2224,6 +2366,7 @@
             const TechnicianDashboard = () => {
                 const [myRequests, setMyRequests] = useState([]);
                 const [myContracts, setMyContracts] = useState([]);
+                const [pendingContracts, setPendingContracts] = useState([]);
                 const [availableJobs, setAvailableJobs] = useState([]);
 
                 useEffect(() => {
@@ -2244,8 +2387,16 @@
                     setAvailableJobs(available);
 
                     const contracts = await DB.getContracts();
+                    
+                    // Contracts pending my approval
+                    const pending = Object.entries(contracts || {})
+                        .filter(([id, cont]) => cont.technicianId === currentUser.id && cont.status === 'pending-contractor-approval')
+                        .map(([id, cont]) => ({ id, ...cont }));
+                    setPendingContracts(pending);
+                    
+                    // My active/approved contracts
                     const myConts = Object.entries(contracts || {})
-                        .filter(([id, cont]) => cont.technicianId === currentUser.id)
+                        .filter(([id, cont]) => cont.technicianId === currentUser.id && cont.status !== 'pending-contractor-approval')
                         .map(([id, cont]) => ({ id, ...cont }));
                     setMyContracts(myConts);
                 };
@@ -2266,6 +2417,34 @@
                         alert('Job accepted!');
                         loadData();
                     }
+                };
+
+                const acceptContract = async (contractId) => {
+                    if (confirm('Accept this contract? It will be sent to admin for final approval.')) {
+                        const contracts = await DB.getContracts();
+                        const contract = contracts[contractId];
+                        await DB.saveContract(contractId, {
+                            ...contract,
+                            status: 'pending-admin-approval',
+                            contractorAcceptedAt: Date.now()
+                        });
+                        alert('Contract accepted! Sent to admin for approval.');
+                        loadData();
+                    }
+                };
+
+                const rejectContract = async (contractId) => {
+                    const reason = prompt('Reason for rejection (optional):');
+                    const contracts = await DB.getContracts();
+                    const contract = contracts[contractId];
+                    await DB.saveContract(contractId, {
+                        ...contract,
+                        status: 'rejected-by-contractor',
+                        rejectionReason: reason,
+                        rejectedAt: Date.now()
+                    });
+                    alert('Contract rejected.');
+                    loadData();
                 };
 
                 const markComplete = async (requestId) => {
@@ -2311,7 +2490,7 @@
                                 <h1 className="text-4xl font-bold text-white mb-8">Welcome, {currentUser.name}!</h1>
 
                                 {/* Stats */}
-                                <div className="grid grid-cols-3 gap-6 mb-8">
+                                <div className="grid grid-cols-4 gap-6 mb-8">
                                     <div className="stat-card p-6 rounded-xl">
                                         <div className="text-3xl font-bold text-blue-500 mb-1">{myRequests.length}</div>
                                         <div className="text-slate-400 text-sm">My Active Jobs</div>
@@ -2321,15 +2500,60 @@
                                         <div className="text-slate-400 text-sm">My Contracts</div>
                                     </div>
                                     <div className="stat-card p-6 rounded-xl">
+                                        <div className="text-3xl font-bold text-orange-500 mb-1">{pendingContracts.length}</div>
+                                        <div className="text-slate-400 text-sm">Pending Approval</div>
+                                    </div>
+                                    <div className="stat-card p-6 rounded-xl">
                                         <div className="text-3xl font-bold text-green-500 mb-1">{availableJobs.length}</div>
                                         <div className="text-slate-400 text-sm">Available Jobs</div>
                                     </div>
                                 </div>
 
+                                {/* Pending Contract Approvals */}
+                                {pendingContracts.length > 0 && (
+                                    <div className="bg-slate-900/50 border border-orange-500/30 rounded-2xl p-6 mb-8">
+                                        <h2 className="text-2xl font-bold text-white mb-4">⏳ Contracts Pending Your Approval</h2>
+                                        <div className="space-y-3">
+                                            {pendingContracts.map(contract => (
+                                                <div key={contract.id} className="profile-card p-4 rounded-lg">
+                                                    <div className="flex items-start justify-between">
+                                                        <div className="flex-1">
+                                                            <div className="font-semibold text-white mb-1">{contract.projectTitle}</div>
+                                                            <div className="text-sm text-slate-400 mb-2">{contract.projectDescription?.substring(0, 100)}...</div>
+                                                            <div className="text-xs text-slate-500 space-y-1">
+                                                                <div>Customer: {contract.customerName}</div>
+                                                                <div>Duration: {contract.duration} • {contract.hoursPerWeek} hrs/week</div>
+                                                                <div>Start: {contract.startDate}</div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="ml-4 text-right">
+                                                            <div className="text-green-500 font-bold mb-3">${contract.budget}</div>
+                                                            <div className="space-y-2">
+                                                                <button
+                                                                    onClick={() => acceptContract(contract.id)}
+                                                                    className="w-full px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-xs"
+                                                                >
+                                                                    ✓ Accept
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => rejectContract(contract.id)}
+                                                                    className="w-full px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-xs"
+                                                                >
+                                                                    ✕ Reject
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Available Jobs */}
                                 {availableJobs.length > 0 && (
                                     <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 mb-8">
-                                        <h2 className="text-2xl font-bold text-white mb-4">Available Jobs</h2>
+                                        <h2 className="text-2xl font-bold text-white mb-4">Available Quick Fix Jobs</h2>
                                         <div className="space-y-3">
                                             {availableJobs.slice(0, 3).map(job => (
                                                 <div key={job.id} className="profile-card p-4 rounded-lg">
@@ -2396,9 +2620,9 @@
                                     </div>
 
                                     <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-                                        <h2 className="text-2xl font-bold text-white mb-4">My Contract Proposals</h2>
+                                        <h2 className="text-2xl font-bold text-white mb-4">My Contracts</h2>
                                         {myContracts.length === 0 ? (
-                                            <p className="text-slate-400">No contracts yet</p>
+                                            <p className="text-slate-400">No active contracts</p>
                                         ) : (
                                             <div className="space-y-3">
                                                 {myContracts.map(contract => (
@@ -2407,7 +2631,7 @@
                                                         <div className="text-sm text-slate-400">{contract.customerName}</div>
                                                         <div className="text-green-500 font-bold mt-1">${contract.budget}</div>
                                                         <span className={`inline-block px-2 py-1 rounded text-xs mt-2 ${
-                                                            contract.status === 'pending' ? 'bg-yellow-500/20 text-yellow-500' :
+                                                            contract.status === 'pending-admin-approval' ? 'bg-yellow-500/20 text-yellow-500' :
                                                             contract.status === 'active' ? 'bg-green-500/20 text-green-500' :
                                                             'bg-slate-500/20 text-slate-400'
                                                         }`}>
@@ -2577,6 +2801,50 @@
                     setContracts(contractArray);
                 };
 
+                const approveContract = async (contractId) => {
+                    if (confirm('Approve this contract and activate it?')) {
+                        const contracts = await DB.getContracts();
+                        const contract = contracts[contractId];
+                        await DB.saveContract(contractId, {
+                            ...contract,
+                            status: 'active',
+                            adminApprovedAt: Date.now()
+                        });
+                        alert('Contract approved and activated!');
+                        loadContracts();
+                    }
+                };
+
+                const rejectContract = async (contractId) => {
+                    const reason = prompt('Enter rejection reason:');
+                    if (reason) {
+                        const contracts = await DB.getContracts();
+                        const contract = contracts[contractId];
+                        await DB.saveContract(contractId, {
+                            ...contract,
+                            status: 'rejected-by-admin',
+                            rejectionReason: reason,
+                            rejectedAt: Date.now()
+                        });
+                        alert('Contract rejected.');
+                        loadContracts();
+                    }
+                };
+
+                const closeContract = async (contractId) => {
+                    if (confirm('Close this contract?')) {
+                        const contracts = await DB.getContracts();
+                        const contract = contracts[contractId];
+                        await DB.saveContract(contractId, {
+                            ...contract,
+                            status: 'closed',
+                            closedAt: Date.now()
+                        });
+                        alert('Contract closed.');
+                        loadContracts();
+                    }
+                };
+
                 return (
                     <div className="min-h-screen">
                         <nav className="fixed top-0 w-full bg-slate-900/80 backdrop-blur-lg border-b border-slate-800 z-50">
@@ -2597,7 +2865,7 @@
 
                         <div className="pt-24 pb-12 px-4">
                             <div className="max-w-7xl mx-auto">
-                                <h1 className="text-4xl font-bold text-white mb-8">All Contracts</h1>
+                                <h1 className="text-4xl font-bold text-white mb-8">All Contracts ({contracts.length})</h1>
 
                                 <div className="space-y-4">
                                     {contracts.length === 0 ? (
@@ -2610,8 +2878,20 @@
                                             <div key={contract.id} className="profile-card p-6 rounded-xl">
                                                 <div className="flex items-start justify-between mb-4">
                                                     <div className="flex-1">
-                                                        <h3 className="text-xl font-bold text-white mb-2">{contract.projectTitle}</h3>
-                                                        <div className="grid md:grid-cols-2 gap-4 text-sm">
+                                                        <div className="flex items-center gap-2 mb-3">
+                                                            <h3 className="text-xl font-bold text-white">{contract.projectTitle}</h3>
+                                                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                                                contract.status === 'pending-contractor-approval' ? 'bg-yellow-500/20 text-yellow-500' :
+                                                                contract.status === 'pending-admin-approval' ? 'bg-orange-500/20 text-orange-500' :
+                                                                contract.status === 'active' ? 'bg-green-500/20 text-green-500' :
+                                                                contract.status === 'rejected-by-contractor' ? 'bg-red-500/20 text-red-500' :
+                                                                contract.status === 'rejected-by-admin' ? 'bg-red-500/20 text-red-500' :
+                                                                'bg-slate-500/20 text-slate-400'
+                                                            }`}>
+                                                                {contract.status}
+                                                            </span>
+                                                        </div>
+                                                        <div className="grid md:grid-cols-2 gap-4 text-sm mb-3">
                                                             <div>
                                                                 <span className="text-slate-400">Customer:</span>
                                                                 <span className="text-white ml-2">{contract.customerName}</span>
@@ -2628,20 +2908,45 @@
                                                                 <span className="text-slate-400">Hours/Week:</span>
                                                                 <span className="text-white ml-2">{contract.hoursPerWeek}</span>
                                                             </div>
+                                                            <div>
+                                                                <span className="text-slate-400">Start Date:</span>
+                                                                <span className="text-white ml-2">{contract.startDate}</span>
+                                                            </div>
                                                         </div>
+                                                        <p className="text-slate-400 text-sm">{contract.projectDescription}</p>
                                                     </div>
                                                     <div className="text-right ml-4">
-                                                        <div className="text-2xl font-bold text-green-500">${contract.budget}</div>
-                                                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold mt-2 ${
-                                                            contract.status === 'pending' ? 'bg-yellow-500/20 text-yellow-500' :
-                                                            contract.status === 'active' ? 'bg-green-500/20 text-green-500' :
-                                                            'bg-slate-500/20 text-slate-400'
-                                                        }`}>
-                                                            {contract.status}
-                                                        </span>
+                                                        <div className="text-2xl font-bold text-green-500 mb-4">${contract.budget}</div>
+                                                        
+                                                        <div className="space-y-2">
+                                                            {contract.status === 'pending-admin-approval' && (
+                                                                <>
+                                                                    <button
+                                                                        onClick={() => approveContract(contract.id)}
+                                                                        className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm"
+                                                                    >
+                                                                        ✓ Approve & Activate
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => rejectContract(contract.id)}
+                                                                        className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm"
+                                                                    >
+                                                                        ✕ Reject
+                                                                    </button>
+                                                                </>
+                                                            )}
+                                                            
+                                                            {contract.status === 'active' && (
+                                                                <button
+                                                                    onClick={() => closeContract(contract.id)}
+                                                                    className="w-full px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition text-sm"
+                                                                >
+                                                                    🔒 Close Contract
+                                                                </button>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <p className="text-slate-400 text-sm">{contract.projectDescription}</p>
                                             </div>
                                         ))
                                     )}
@@ -2689,9 +2994,70 @@
                 };
 
                 const requestBudgetIncrease = async (requestId, currentBudget) => {
-                    const newBudget = prompt(`Current budget: $${currentBudget}. Suggest new budget:`, currentBudget);
-                    if (newBudget) {
-                        alert(`Budget increase request sent to customer (from $${currentBudget} to $${newBudget})`);
+                    const newBudget = prompt(`Current budget: $${currentBudget}. Enter proposed budget:`, currentBudget);
+                    if (newBudget && !isNaN(newBudget) && parseFloat(newBudget) > 0) {
+                        const requests = await DB.getRequests();
+                        const request = requests[requestId];
+                        await DB.saveRequest(requestId, {
+                            ...request,
+                            status: 'budget-negotiation',
+                            proposedBudget: parseFloat(newBudget),
+                            originalBudget: request.budget,
+                            proposedBy: 'admin',
+                            proposedAt: Date.now()
+                        });
+                        alert(`Budget proposal sent to customer!\nOriginal: $${currentBudget}\nProposed: $${newBudget}`);
+                        loadRequests();
+                    }
+                };
+
+                const acceptCounterOffer = async (requestId) => {
+                    if (confirm('Accept the customer\'s counter offer?')) {
+                        const requests = await DB.getRequests();
+                        const request = requests[requestId];
+                        await DB.saveRequest(requestId, {
+                            ...request,
+                            budget: request.proposedBudget,
+                            status: 'pending',
+                            proposedBudget: null,
+                            adminProposedBudget: null,
+                            originalBudget: null,
+                            proposedBy: null,
+                            counterOfferAcceptedAt: Date.now()
+                        });
+                        alert('Counter offer accepted! Request is now pending for approval.');
+                        loadRequests();
+                    }
+                };
+
+                const rejectCounterOffer = async (requestId, customerOffer) => {
+                    const newProposal = prompt(`Customer counter offered: $${customerOffer}\nEnter your new proposal (or leave empty to reject):`, customerOffer);
+                    if (newProposal && !isNaN(newProposal) && parseFloat(newProposal) > 0) {
+                        const requests = await DB.getRequests();
+                        const request = requests[requestId];
+                        await DB.saveRequest(requestId, {
+                            ...request,
+                            status: 'budget-negotiation',
+                            proposedBudget: parseFloat(newProposal),
+                            originalBudget: request.originalBudget || request.budget,
+                            proposedBy: 'admin',
+                            proposedAt: Date.now()
+                        });
+                        alert(`New proposal sent to customer: $${newProposal}`);
+                        loadRequests();
+                    } else if (newProposal !== null && (!newProposal || newProposal.trim() === '')) {
+                        if (confirm('Reject counter offer and cancel the request?')) {
+                            const requests = await DB.getRequests();
+                            const request = requests[requestId];
+                            await DB.saveRequest(requestId, {
+                                ...request,
+                                status: 'rejected',
+                                rejectionReason: 'Admin rejected counter offer',
+                                rejectedAt: Date.now()
+                            });
+                            alert('Request rejected.');
+                            loadRequests();
+                        }
                     }
                 };
 
@@ -2732,16 +3098,18 @@
                             <div className="max-w-7xl mx-auto">
                                 <div className="flex items-center justify-between mb-8">
                                     <h1 className="text-4xl font-bold text-white">Service Requests</h1>
-                                    <div className="flex gap-2">
-                                        {['all', 'pending', 'approved', 'in-progress', 'completed', 'rejected', 'closed'].map(status => (
+                                    <div className="flex gap-2 flex-wrap">
+                                        {['all', 'pending', 'approved', 'in-progress', 'completed', 'rejected', 'closed', 'budget-negotiation', 'budget-counter-offer'].map(status => (
                                             <button
                                                 key={status}
                                                 onClick={() => setFilter(status)}
-                                                className={`filter-chip px-4 py-2 rounded-lg capitalize ${
+                                                className={`filter-chip px-4 py-2 rounded-lg capitalize text-xs ${
                                                     filter === status ? 'active' : 'bg-slate-800 text-slate-400'
                                                 }`}
                                             >
-                                                {status}
+                                                {status === 'budget-negotiation' ? '💰 Budget Neg.' : 
+                                                 status === 'budget-counter-offer' ? '💬 Counter' : 
+                                                 status}
                                             </button>
                                         ))}
                                     </div>
@@ -2765,6 +3133,8 @@
                                                                 request.status === 'in-progress' ? 'bg-purple-500/20 text-purple-500' :
                                                                 request.status === 'completed' ? 'bg-green-500/20 text-green-500' :
                                                                 request.status === 'rejected' ? 'bg-red-500/20 text-red-500' :
+                                                                request.status === 'budget-negotiation' ? 'bg-amber-500/20 text-amber-500' :
+                                                                request.status === 'budget-counter-offer' ? 'bg-blue-500/20 text-blue-500' :
                                                                 'bg-slate-500/20 text-slate-400'
                                                             }`}>
                                                                 {request.status}
@@ -2835,6 +3205,42 @@
                                                                         ✕ Reject
                                                                     </button>
                                                                 </>
+                                                            )}
+                                                            
+                                                            {request.status === 'budget-counter-offer' && (
+                                                                <>
+                                                                    <div className="mb-3 p-3 bg-blue-500/10 rounded-lg border border-blue-500/30">
+                                                                        <div className="text-xs text-slate-400 mb-1">Customer Counter Offer:</div>
+                                                                        <div className="text-xl font-bold text-blue-400">${request.proposedBudget}</div>
+                                                                        {request.adminProposedBudget && (
+                                                                            <div className="text-xs text-slate-500 mt-1">
+                                                                                (Your proposal: ${request.adminProposedBudget})
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                    <button
+                                                                        onClick={() => acceptCounterOffer(request.id)}
+                                                                        className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm"
+                                                                    >
+                                                                        ✓ Accept Counter
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => rejectCounterOffer(request.id, request.proposedBudget)}
+                                                                        className="w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition text-sm"
+                                                                    >
+                                                                        💬 New Proposal
+                                                                    </button>
+                                                                </>
+                                                            )}
+                                                            
+                                                            {request.status === 'budget-negotiation' && (
+                                                                <div className="p-3 bg-amber-500/10 rounded-lg border border-amber-500/30">
+                                                                    <div className="text-xs text-slate-400 mb-1">Awaiting Customer Response</div>
+                                                                    <div className="text-sm text-amber-400">Proposed: ${request.proposedBudget}</div>
+                                                                    <div className="text-xs text-slate-500 mt-1">
+                                                                        Original: ${request.originalBudget || request.budget}
+                                                                    </div>
+                                                                </div>
                                                             )}
                                                             
                                                             {(request.status === 'completed' || request.status === 'approved') && (
